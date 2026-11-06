@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Aurelia · Flightline DG</title>
+<meta name="description" content="Build disc golf holes and courses on an alien world, then play them.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:wght@700;800&family=Alegreya+Sans:wght@400;700;800&display=swap">
+<style>
+:root{--bg:#120f26;--panel:#1e1a38;--line:rgba(246,239,223,.14);--paper:#f6efdf;--muted:#b9b2c9;--gold:#ffc93c;--teal:#45f0d8;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--paper);font:16px/1.55 'Alegreya Sans',system-ui,sans-serif}
+body{background:radial-gradient(1200px 600px at 70% -10%,#2a2160 0%,transparent 60%),radial-gradient(900px 500px at -10% 110%,#0f3b3a 0%,transparent 60%),var(--bg);min-height:100vh}
+.wrap{max-width:980px;margin:0 auto;padding-block:max(28px,env(safe-area-inset-top)) 56px;padding-left:max(18px,env(safe-area-inset-left));padding-right:max(18px,env(safe-area-inset-right))}
+.k{font-weight:800;font-size:13px;letter-spacing:4px;text-transform:uppercase;color:var(--gold)}
+h1{font:800 clamp(44px,9vw,84px)/.95 'Alegreya',serif;margin:8px 0 12px;text-wrap:balance}
+.lede{font-size:clamp(17px,2.4vw,21px);color:var(--muted);max-width:60ch;margin:0}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin:32px 0 40px}
+.card{display:flex;flex-direction:column;gap:10px;padding:22px;border-radius:20px;background:var(--panel);border:1px solid var(--line);text-decoration:none;color:inherit;transition:transform .15s,border-color .15s}
+.card:hover,.card:focus-visible{transform:translateY(-3px);border-color:var(--gold);outline:none}
+.card h2{font:800 30px/1.05 'Alegreya',serif;margin:0}
+.card p{margin:0;color:var(--muted)}
+.card .go{margin-top:auto;align-self:flex-start;background:var(--gold);color:#15132a;font-weight:800;border-radius:12px;padding:10px 18px}
+.card.alt .go{background:transparent;color:var(--gold);border:2px solid var(--gold)}
+section{margin-top:36px}
+h3{font:800 24px 'Alegreya',serif;margin:0 0 10px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.tip{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.tip b{color:var(--paper)}
+.tip span{color:var(--muted)}
+ol{margin:0;padding-left:20px;color:var(--muted)}
+ol b{color:var(--paper)}
+footer{margin-top:48px;color:var(--muted);font-size:14px;border-top:1px solid var(--line);padding-top:18px}
+a{color:var(--teal)}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <div class="k">Flightline DG · Aurelia</div>
+  <h1>Build the course.<br>Then throw it.</h1>
+  <p class="lede">Sculpt hills, plant guardian trees, cut flightlines through old forest, raise ruins and step pyramids, then play your holes on a lush alien world, by day or in the glow.</p>
+
+  <div class="cards">
+    <a class="card" href="builder.html">
+      <div class="k">Make</div>
+      <h2>Course Builder</h2>
+      <p>Build holes from a landscape or the hole randomizer, edit trees in 3D, collect holes into 9s and 18s, and share them with the crew.</p>
+      <span class="go">Open the builder</span>
+    </a>
+    <a class="card alt" href="terraces.html">
+      <div class="k">Play</div>
+      <h2>The Terraces</h2>
+      <p>The showcase hole: 719 ft from a mountain tee, down three mossy tiers, across the creek to a basin pin.</p>
+      <span class="go">Play The Terraces</span>
+    </a>
+  </div>
+
+  <section>
+    <h3>Throwing</h3>
+    <div class="grid2">
+      <div class="tip"><b>Tap the disc</b> <span>for a clean, flat throw. AUTO power is set to just reach the basket.</span></div>
+      <div class="tip"><b>Pull back and flick</b> <span>to shape it: the curve of your flick reads hyzer or anhyzer.</span></div>
+      <div class="tip"><b>Hold the disc</b> <span>then slide: left and right tilt it, forward and back set the nose.</span></div>
+      <div class="tip"><b>Tap the world</b> <span>to aim somewhere else. VIEW cycles behind you, overhead, above the trees and from the pin.</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h3>Sharing courses with the crew</h3>
+    <ol>
+      <li><b>Build a hole</b>, or put a course together under the Courses tab.</li>
+      <li>In the library, tap a hole and choose <b>Share hole file</b>, or open a course and tap <b>Share course file</b>. You get a small <code>.aurelia.json</code> file.</li>
+      <li>Send it however you like: text, Discord, email.</li>
+      <li>Your friend opens the builder, taps <b>Import</b> and picks the file. The holes, and the course if there is one, land in their library to play or remix.</li>
+    </ol>
+    <p class="lede" style="font-size:15px;margin-top:12px">Your holes save in this browser on this device. Share files are also your backup, so export the ones you love.</p>
+  </section>
+
+  <footer>Aurelia is built by Demon Digital Media for Flightline DG. Found a bug or have an idea? Open an issue on the <a href="https://github.com/demondigitalmedia/aurelia">GitHub repo</a>.</footer>
+</main>
+</body>
+</html>

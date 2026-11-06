@@ -1,0 +1,221 @@
+<style>
+/* ---------- Aurelia Builder: library, map editor, courses (same dark Aurelia look as the game) ---------- */
+#bApp{position:fixed;inset:0;z-index:30;pointer-events:none;font-family:'Alegreya Sans',system-ui,sans-serif;color:var(--paper)}
+#bApp .screen{position:absolute;inset:0;pointer-events:auto;display:flex;flex-direction:column}
+#bApp .screen[hidden]{display:none}
+body.mode-play #bApp{display:none}
+body.mode-look #ed{background:transparent;pointer-events:none}
+body.mode-look #ed .ebar,body.mode-look #ed .lookbar{pointer-events:auto}
+body.mode-look #map,body.mode-look #dock,body.mode-look #mapInfo{display:none}
+#bApp button{font:inherit;color:inherit;cursor:pointer;min-height:44px}
+#bApp button:focus-visible,#bApp input:focus-visible,#bApp select:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* library */
+#lib{background:radial-gradient(120% 80% at 50% 0%,#2a2152 0%,var(--bg) 60%);overflow:auto}
+.lbar{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding-block:calc(18px + var(--st)) 8px}
+.brand .k{font-size:12px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);font-weight:800}
+.brand h1{margin:2px 0 0;font-family:'Alegreya',serif;font-weight:800;font-size:clamp(30px,7vw,46px);line-height:1;text-wrap:balance}
+.pill{font-size:12px;padding:6px 10px;border-radius:20px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.pill.ok{color:var(--teal);border-color:rgba(79,227,193,.4)}
+.tabs{display:flex;gap:6px;padding-block:8px}
+.tabs button{background:transparent;border:1px solid var(--line);border-radius:22px;padding:0 18px;font-weight:800;letter-spacing:1px}
+.tabs button.on{background:var(--gold);color:var(--ink);border-color:var(--gold)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;padding-block:8px calc(24px + var(--sb))}
+.card{position:relative;display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden;text-align:left;padding:0}
+.card .th{aspect-ratio:3/4;max-width:100%;width:100%;background:#1b3a25 center/cover no-repeat;display:block}
+.card .meta{padding:10px 12px 12px;display:flex;flex-direction:column;gap:2px}
+.card b{font-family:'Alegreya',serif;font-size:18px;line-height:1.1}
+.card span{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.card.new{align-items:center;justify-content:center;min-height:220px;border-style:dashed;border-color:rgba(255,201,60,.5);color:var(--gold);gap:8px}
+.card.new b{font-size:20px}
+.card .more{position:absolute;top:6px;right:6px;width:40px;height:40px;min-height:40px!important;border-radius:20px;background:rgba(21,19,42,.75);border:1px solid var(--line);font-size:20px;line-height:1}
+.empty{color:var(--muted);font-size:15px;padding:8px 0}
+
+/* editor: phone first. Header on one line, the map fills the middle, the dock sits under your thumb */
+#ed{background:var(--bg)}
+.ebar{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;padding-block:calc(6px + var(--st)) 6px;background:rgba(21,19,42,.94);border-bottom:1px solid var(--line);z-index:3;position:relative}
+.ib{width:44px;flex:0 0 44px;border-radius:12px;background:rgba(255,255,255,.06);border:1px solid var(--line);font-size:20px;font-weight:800;padding:0;display:inline-flex;align-items:center;justify-content:center}
+.ib:disabled{opacity:.35}
+.ib.on{background:rgba(255,201,60,.22);border-color:var(--gold)}
+#edTitle{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:1px;background:transparent;border:0;padding:0 4px;text-align:left}
+#edTitle b{font:800 19px/1.1 'Alegreya',serif;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#edTitle span{font-size:12px;color:var(--muted);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-variant-numeric:tabular-nums}
+#edTitle span::after{content:' · edit';color:var(--gold)}
+#cName{flex:1 1 140px;min-width:0;height:44px;box-sizing:border-box;background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:12px;color:var(--paper);font:800 18px 'Alegreya',serif;padding:0 10px}
+.field{width:100%;height:46px;box-sizing:border-box;background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:12px;color:var(--paper);font:800 19px 'Alegreya',serif;padding:0 12px}
+.chip{border-radius:12px;background:rgba(255,255,255,.06);border:1px solid var(--line);padding:0 12px;font-weight:800;font-size:14px;white-space:nowrap}
+.chip.on{background:rgba(255,201,60,.2);border-color:var(--gold)}
+.cta{border-radius:12px;background:var(--gold);color:var(--ink)!important;border:0;padding:0 16px;font-family:'Alegreya',serif;font-weight:800;font-size:18px;flex:0 0 auto}
+.saved{font-size:12px;color:var(--muted);white-space:nowrap;text-align:right;flex:0 0 auto}
+#stage{position:relative;flex:1 1 auto;min-height:0}
+#map{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:crosshair;background:#0e0c1f}
+#map.hand{cursor:grab}
+#mapInfo{position:absolute;left:max(10px,var(--sl));bottom:10px;max-width:calc(100% - 90px);pointer-events:none;font-size:12px;font-weight:700;background:rgba(21,19,42,.82);border:1px solid var(--line);border-radius:10px;padding:5px 9px;font-variant-numeric:tabular-nums}
+#mapInfo:empty{display:none}
+.fab{position:absolute;right:max(10px,var(--sr));top:10px;display:flex;flex-direction:column;gap:8px}
+.fab .ib{background:rgba(21,19,42,.86);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+#inspire{position:absolute;left:max(10px,var(--sl));right:calc(64px + var(--sr));top:10px;display:flex;align-items:center;gap:8px;background:rgba(21,19,42,.9);border:1px solid rgba(255,201,60,.45);border-radius:14px;padding:6px 6px 6px 12px;font-size:13px;line-height:1.3}
+#inspire[hidden]{display:none}
+#inspire span{flex:1;min-width:0}
+#inspire button{min-height:36px!important;flex:0 0 auto}
+#dock{background:rgba(21,19,42,.97);border-top:1px solid var(--line);padding-block:6px calc(4px + var(--sb));display:flex;flex-direction:column;gap:6px;z-index:2;position:relative}
+.row{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.row::-webkit-scrollbar{display:none}
+#opts button{flex:0 0 auto;display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:20px;padding:0 14px;font-weight:700;font-size:14px;white-space:nowrap;min-height:40px}
+#opts button.on{background:rgba(255,201,60,.22);border-color:var(--gold);color:#fff}
+#opts i{width:14px;height:14px;border-radius:50%;display:inline-block;border:2px solid rgba(0,0,0,.35)}
+.slrow{display:flex;align-items:flex-start;gap:8px}
+.sliders{flex:1;min-width:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:2px 14px}
+.sliders label{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px;font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted);min-height:38px}
+.sliders input{width:100%;accent-color:#ffc93c;min-width:0;height:28px}
+.sliders output{min-width:52px;text-align:right;color:var(--paper);font-variant-numeric:tabular-nums;text-transform:none;letter-spacing:0;font-size:13px}
+#slMore{min-height:38px!important;flex:0 0 auto}
+#groups{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;border-top:1px solid var(--line);padding-top:4px}
+#groups button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:transparent;border:0;border-radius:12px;font-weight:800;letter-spacing:.6px;font-size:11px;text-transform:uppercase;padding:4px 0;min-height:52px;color:var(--muted)}
+#groups button svg{width:22px;height:22px}
+#groups button.on{color:var(--gold);background:rgba(255,201,60,.1)}
+.lookbar{position:absolute;left:0;right:0;top:calc(64px + var(--st));display:none;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;pointer-events:none;padding:0 12px}
+body.mode-look .lookbar{display:flex}
+.lookbar span{pointer-events:none;background:rgba(21,19,42,.8);border:1px solid var(--line);border-radius:20px;padding:8px 14px;font-size:13px;font-weight:700}
+.lookbar button{pointer-events:auto;border-radius:20px;background:rgba(21,19,42,.88);border:1px solid var(--line);padding:0 16px;font-weight:800}
+.lookbar button.on{background:var(--gold);color:var(--ink);border-color:var(--gold)}
+#treeSheet{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:min(560px,100%);box-sizing:border-box;background:rgba(30,26,56,.97);border:1px solid rgba(255,201,60,.45);border-bottom:0;border-radius:18px 18px 0 0;padding:12px max(16px,var(--sl)) calc(12px + var(--sb)) max(16px,var(--sr));pointer-events:auto;z-index:35;display:flex;flex-direction:column;gap:6px}
+#treeSheet[hidden]{display:none}
+#treeSheet h3{margin:0;font:800 22px 'Alegreya',serif}
+#treeSheet p{margin:0;color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums}
+#treeSheet .sliders{grid-template-columns:1fr}
+#treeSheet .mrow{margin-top:4px}
+body.sheet-open #joy{display:none!important}
+body.mode-look #ed{background:transparent;pointer-events:none}
+body.mode-look #ed .ebar,body.mode-look #ed .lookbar{pointer-events:auto}
+body.mode-look #stage,body.mode-look #dock{visibility:hidden}
+@media (max-width:760px){
+  .ebar{gap:5px}#edTitle b{font-size:17px}.saved{display:none}.cta{padding:0 14px;font-size:17px}
+  #dock:not(.open) .sliders label:nth-child(n+2){display:none}
+  .lookbar span{font-size:12px;padding:6px 10px}
+}
+@media (min-width:761px){#slMore{display:none}#dock{padding-left:max(20px,var(--sl));padding-right:max(20px,var(--sr))}}
+@media (min-width:1100px){#ed .ebar,#dock{padding-left:max(24px,calc((100vw - 1180px)/2));padding-right:max(24px,calc((100vw - 1180px)/2))}}
+
+/* course editor */
+#crs{background:var(--bg);overflow:auto}
+.slots{display:flex;flex-direction:column;gap:6px;padding-block:8px}
+.slot{display:grid;grid-template-columns:34px 1fr auto;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px 10px}
+.slot b{font-family:'Alegreya',serif;font-size:20px;text-align:center}
+.slot select{width:100%;min-width:0;height:44px;background:rgba(255,255,255,.06);color:var(--paper);border:1px solid var(--line);border-radius:10px;font:600 15px 'Alegreya Sans',sans-serif;padding:0 8px}
+.slot select option{background:#1e1a38;color:#f6efdf}
+.slot span{font-size:13px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.ctot{display:flex;gap:16px;flex-wrap:wrap;align-items:center;padding-block:8px;color:var(--muted);font-size:14px}
+.ctot b{color:var(--paper);font-size:18px}
+.cfoot{display:flex;gap:8px;flex-wrap:wrap;padding-block:8px calc(24px + var(--sb))}
+.danger{border-radius:12px;background:transparent;border:1px solid rgba(255,106,77,.6);color:#ff9b85!important;padding:0 14px;font-weight:800}
+
+/* modal */
+#bModal{position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;background:rgba(8,6,20,.6);pointer-events:auto;padding:16px}
+#bModal[hidden]{display:none}
+.mbox{background:#1e1a38;border:1px solid rgba(255,201,60,.4);border-radius:18px;max-width:560px;width:100%;max-height:calc(100vh - 32px);overflow:auto;padding:18px}
+.mbox h2{margin:0 0 4px;font-family:'Alegreya',serif;font-size:28px}
+.mbox p{margin:0 0 12px;color:var(--muted)}
+.tsec{margin:14px 0 6px;font-size:12px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--gold)}
+.tpl button.hot{border-color:rgba(255,201,60,.6);background:rgba(255,201,60,.1)}
+.tpl{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.tpl button{display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:14px;padding:12px}
+.tpl button b{font-family:'Alegreya',serif;font-size:18px}
+.tpl button span{font-size:13px;color:var(--muted)}
+.mrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;justify-content:flex-end}
+.mlist{display:flex;flex-direction:column;gap:6px}
+.mlist button{text-align:left;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:12px;padding:0 14px;font-weight:700}
+.sc{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:15px}
+.sc th,.sc td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left}
+.sc td:last-child,.sc th:last-child{text-align:right}
+.busy{position:fixed;inset:0;z-index:45;display:flex;align-items:center;justify-content:center;background:rgba(8,6,20,.55);font-family:'Alegreya',serif;font-size:24px;pointer-events:auto}
+.busy[hidden]{display:none}
+
+
+/* landscape: the tools stand in a column on the left, the hole lies across the screen on the right */
+@media (orientation:landscape) and (min-width:820px){
+  #bApp #ed:not([hidden]){display:grid;grid-template-columns:clamp(300px,30vw,380px) 1fr;grid-template-rows:auto 1fr}
+  #ed .ebar{grid-column:1 / -1}
+  #ed #dock{grid-column:1;grid-row:2;flex-direction:column;justify-content:flex-start;gap:12px;border-top:0;border-right:1px solid var(--line);overflow-y:auto;padding:12px 14px calc(12px + var(--sb)) max(14px,var(--sl))}
+  #ed #stage{grid-column:2;grid-row:2}
+  #dock #groups{order:-1;border-top:0;padding-top:0;border-bottom:1px solid var(--line);padding-bottom:8px}
+  #dock #opts{flex-wrap:wrap;overflow:visible}
+  #dock .sliders{grid-template-columns:1fr}
+  #dock .slrow{order:2}
+}
+#bNote{position:fixed;left:50%;bottom:calc(20px + var(--sb));transform:translate(-50%,20px);opacity:0;transition:all .25s;background:rgba(30,26,56,.97);border:1px solid rgba(255,201,60,.55);border-radius:14px;padding:10px 16px;font-weight:700;font-size:14px;z-index:70;pointer-events:none;max-width:calc(100vw - 32px)}
+#bNote.show{opacity:1;transform:translate(-50%,0)}
+/* the guided tour */
+#tour{position:fixed;inset:0;z-index:60;pointer-events:auto}
+#tour[hidden]{display:none}
+#tourHole{position:fixed;border-radius:14px;box-shadow:0 0 0 9999px rgba(8,6,20,.68);border:2px solid var(--gold);transition:all .28s ease;pointer-events:none}
+#tourHole.none{left:50%!important;top:42%!important;width:0!important;height:0!important;border-color:transparent}
+#tourCard{position:fixed;left:max(12px,var(--sl));right:max(12px,var(--sr));margin:0 auto;max-width:440px;background:#1e1a38;border:1px solid rgba(255,201,60,.55);border-radius:18px;padding:14px 16px 12px;box-shadow:0 12px 40px rgba(0,0,0,.5);transition:top .28s ease}
+#tourCard .k{font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--gold)}
+#tourCard h3{margin:2px 0 6px;font:800 22px/1.15 'Alegreya',serif;text-wrap:balance}
+#tourCard p{margin:0;font-size:15px;line-height:1.45;color:var(--paper)}
+#tourCard .mrow{margin-top:12px;justify-content:space-between;align-items:center}
+#tourCard .dots{display:flex;gap:5px}
+#tourCard .dots i{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.25)}
+#tourCard .dots i.on{background:var(--gold)}
+</style>
+<div id="bApp">
+  <section id="lib" class="screen">
+    <header class="lbar wrap"><div class="brand"><div class="k">Flightline DG · Aurelia</div><h1>Course Builder</h1></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end"><button class="chip" id="libImport" type="button">Import</button><button class="chip" id="libTour" type="button">Take the tour</button><input type="file" id="importFile" accept=".json,application/json" hidden><div class="pill" id="saveMode">Checking storage…</div></div></header>
+    <nav class="tabs wrap" role="tablist" aria-label="Library"><button id="tabHoles" class="on" role="tab" aria-selected="true" type="button">Holes</button><button id="tabCourses" role="tab" aria-selected="false" type="button">Courses</button></nav>
+    <div class="wrap" id="holesPane"><div class="grid" id="holeGrid"></div></div>
+    <div class="wrap" id="coursesPane" hidden><div class="grid" id="courseGrid"></div></div>
+  </section>
+
+  <section id="ed" class="screen" hidden>
+    <header class="ebar wrap">
+      <button class="ib" id="edBack" type="button" aria-label="Back to the library">‹</button>
+      <button id="edTitle" type="button" aria-label="Hole settings: name and par"><b id="edName">Hole</b><span id="edMeta"></span></button>
+      <span class="saved" id="edSaved">Saved</span>
+      <button class="chip" id="ed3d" type="button" aria-pressed="false">3D</button>
+      <button class="cta" id="edPlay" type="button">Play</button>
+    </header>
+    <div id="stage">
+      <canvas id="map" aria-label="Hole map. Use the tools below to sculpt, paint, plant, cut paths and build."></canvas>
+      <div id="inspire" hidden><span id="inspireT"></span><button class="chip" id="reroll" type="button">Reroll</button><button class="ib" id="inspireX" type="button" aria-label="Hide this note" style="width:36px;flex-basis:36px;min-height:36px">×</button></div>
+      <div class="fab">
+        <button class="ib" id="edUndo" type="button" aria-label="Undo"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 7 4 12l5 5"/><path d="M4 12h10a6 6 0 0 1 0 12h-2"/></svg></button>
+        <button class="ib" id="edRedo" type="button" aria-label="Redo"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 7 5 5-5 5"/><path d="M20 12H10a6 6 0 0 0 0 12h2"/></svg></button>
+        <button class="ib" id="edFit" type="button" aria-label="Fit the whole hole"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+        <button class="ib" id="edTour" type="button" aria-label="Take the tour"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M9.3 9.2a2.8 2.8 0 0 1 5.4 1c0 1.9-2.7 2.4-2.7 4"/><path d="M12 17.6v.1"/></svg></button>
+        <button class="ib" id="edHand" type="button" aria-pressed="false" aria-label="Move the map"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V12M11 11V4a1.5 1.5 0 0 1 3 0v8M14 11.5V6a1.5 1.5 0 0 1 3 0v8.5a6.5 6.5 0 0 1-6.5 6.5H10a6 6 0 0 1-4.6-2.2L3 15.5a1.6 1.6 0 0 1 2.4-2l2.6 2.5"/></svg></button>
+      </div>
+      <div id="mapInfo"></div>
+    </div>
+    <div id="dock" class="wrap">
+      <div class="slrow"><div class="sliders" id="sliders"></div><button class="chip" id="slMore" type="button" aria-expanded="false">More</button></div>
+      <div class="row" id="opts" aria-label="Tools"></div>
+      <nav id="groups" role="tablist" aria-label="Tool groups"></nav>
+    </div>
+    <div class="lookbar"><button id="lkWalk" type="button" aria-pressed="false">Walk</button><button id="lkSee" type="button" aria-pressed="false">See through</button><span id="lkHint">Tap a tree to edit it · drag to orbit · pinch to zoom</span></div>
+  </section>
+  <div id="treeSheet" hidden role="dialog" aria-label="Edit this tree">
+    <h3 id="tsName">Tree</h3><p id="tsInfo"></p>
+    <div class="sliders" id="tsSliders"></div>
+    <div class="mrow"><button class="danger" id="tsRemove" type="button">Remove tree</button><button class="cta" id="tsDone" type="button">Done</button></div>
+  </div>
+
+  <section id="crs" class="screen" hidden>
+    <header class="ebar wrap">
+      <button class="ib" id="cBack" type="button" aria-label="Back to the library">‹</button>
+      <input id="cName" type="text" maxlength="40" aria-label="Course name" autocomplete="off">
+      <button class="chip" id="cSize" type="button">18 holes</button>
+      <span class="saved" id="cSaved">Saved</span>
+      <button class="cta" id="cPlay" type="button">Play round</button>
+    </header>
+    <div class="wrap">
+      <div class="ctot" id="cTot"></div>
+      <div class="slots" id="cSlots"></div>
+      <div class="cfoot"><button class="chip" id="cFill" type="button">Fill empty slots in order</button><button class="chip" id="cShare" type="button">Share course file</button><button class="danger" id="cDelete" type="button">Delete course</button></div>
+    </div>
+  </section>
+</div>
+<div id="bModal" hidden><div class="mbox" id="bBox" role="dialog" aria-modal="true"></div></div>
+<div id="tour" hidden role="dialog" aria-modal="true" aria-label="Builder tour"><div id="tourHole"></div><div id="tourCard"><div class="k" id="tourK"></div><h3 id="tourH"></h3><p id="tourP"></p><div class="mrow"><div class="dots" id="tourDots"></div><div style="display:flex;gap:8px"><button class="chip" id="tourSkip" type="button">Skip</button><button class="chip" id="tourBack" type="button">Back</button><button class="cta" id="tourNext" type="button">Next</button></div></div></div></div>
+<div class="busy" id="bBusy" hidden>Growing the forest…</div>
