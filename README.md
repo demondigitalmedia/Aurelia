@@ -8,7 +8,7 @@ A disc golf course builder and game set on a lush alien world, by Demon Digital 
 
 ## Play it
 
-Once GitHub Pages is on (see below), the site lives at **https://demondigitalmedia.github.io/aurelia/**:
+Once GitHub Pages is on (see below), the site lives at **https://demondigitalmedia.github.io/Aurelia/**:
 
 | Page | What it is |
 |---|---|
