@@ -44,6 +44,8 @@
     return Promise.resolve(kind === 'holes' ? lsGet('aub:hole:' + id) : ((lsGet('aub:idx:' + kind) || {})[id] || null));
   };
   Store.put = function (kind, id, data) {
+    // first local save: ask the browser to keep this origin's storage (Firefox may show a prompt, Chrome decides quietly)
+    if (Store.mode !== 'db' && !Store.asked) { Store.asked = true; if (window.AureliaApp) window.AureliaApp.persist(); }
     if (Store.mode === 'db') return serial(kind + '/' + id, function () { return coll(kind).doc(id).set(data); });
     if (kind === 'holes') { if (!lsSet('aub:hole:' + id, data)) return Promise.reject(new Error('full')); return Promise.resolve(); }
     var idx = lsGet('aub:idx:' + kind) || {}; idx[id] = data; lsSet('aub:idx:' + kind, idx); return Promise.resolve();
@@ -869,6 +871,7 @@
     };
     rd.readAsText(file);
   }
+  if (window.AureliaApp) window.AureliaApp.bind($('libInstall'));
   $('libImport').addEventListener('click', function () { $('importFile').value = ''; $('importFile').click(); });
   $('importFile').addEventListener('change', function () { var f = this.files && this.files[0]; if (f) importFile(f); });
   $('cShare').addEventListener('click', function () { var c = S.course; if (!c) return; shareHoles(c.holes.slice(0, c.size), c.name || 'course', c); });

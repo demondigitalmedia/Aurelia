@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Aurelia app icon. Full bleed so it works as a maskable icon; the art stays inside the central 80% safe zone. -->
+  <defs>
+    <radialGradient id="sky" cx="68%" cy="18%" r="95%">
+      <stop offset="0" stop-color="#3a2d86"/><stop offset=".55" stop-color="#1c1742"/><stop offset="1" stop-color="#120f26"/>
+    </radialGradient>
+    <radialGradient id="moss" cx="10%" cy="105%" r="70%">
+      <stop offset="0" stop-color="#14514d"/><stop offset="1" stop-color="#14514d" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="disc" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe08a"/><stop offset=".55" stop-color="#ffc93c"/><stop offset="1" stop-color="#d98a1c"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#sky)"/>
+  <rect width="512" height="512" fill="url(#moss)"/>
+  <g transform="translate(256 256) scale(.86) translate(-256 -256)">
+  <!-- flightline: an S-curve from the tee (lower left) up to the disc -->
+  <path d="M104 404 C 170 380, 150 290, 236 252 S 340 196, 352 172" fill="none" stroke="#45f0d8" stroke-width="14" stroke-linecap="round" stroke-dasharray="2 30" opacity=".95"/>
+  <!-- the disc, tilted -->
+  <g transform="translate(360 168) rotate(-16)">
+    <ellipse cx="0" cy="14" rx="96" ry="34" fill="#000" opacity=".28"/>
+    <ellipse cx="0" cy="0" rx="96" ry="34" fill="url(#disc)"/>
+    <ellipse cx="0" cy="-4" rx="66" ry="20" fill="none" stroke="#fff4c8" stroke-width="5" opacity=".7"/>
+  </g>
+  <!-- two small stars -->
+  <circle cx="150" cy="140" r="6" fill="#f6efdf" opacity=".85"/>
+  <circle cx="214" cy="104" r="4" fill="#f6efdf" opacity=".6"/>
+  </g>
+</svg>

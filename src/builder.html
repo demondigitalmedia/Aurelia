@@ -57,6 +57,7 @@ body.mode-look #map,body.mode-look #dock,body.mode-look #mapInfo{display:none}
 .fab .ib{background:rgba(21,19,42,.86);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 #inspire{position:absolute;left:max(10px,var(--sl));right:calc(64px + var(--sr));top:10px;display:flex;align-items:center;gap:8px;background:rgba(21,19,42,.9);border:1px solid rgba(255,201,60,.45);border-radius:14px;padding:6px 6px 6px 12px;font-size:13px;line-height:1.3}
 #inspire[hidden]{display:none}
+#libInstall[hidden]{display:none}
 #inspire span{flex:1;min-width:0}
 #inspire button{min-height:36px!important;flex:0 0 auto}
 #dock{background:rgba(21,19,42,.97);border-top:1px solid var(--line);padding-block:6px calc(4px + var(--sb));display:flex;flex-direction:column;gap:6px;z-index:2;position:relative}
@@ -162,7 +163,7 @@ body.mode-look #stage,body.mode-look #dock{visibility:hidden}
 </style>
 <div id="bApp">
   <section id="lib" class="screen">
-    <header class="lbar wrap"><div class="brand"><div class="k">Flightline DG · Aurelia</div><h1>Course Builder</h1></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end"><button class="chip" id="libImport" type="button">Import</button><button class="chip" id="libTour" type="button">Take the tour</button><input type="file" id="importFile" accept=".json,application/json" hidden><div class="pill" id="saveMode">Checking storage…</div></div></header>
+    <header class="lbar wrap"><div class="brand"><div class="k">Flightline DG · Aurelia</div><h1>Course Builder</h1></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end"><button class="chip" id="libInstall" type="button" hidden>Install</button><button class="chip" id="libImport" type="button">Import</button><button class="chip" id="libTour" type="button">Take the tour</button><input type="file" id="importFile" accept=".json,application/json" hidden><div class="pill" id="saveMode">Checking storage…</div></div></header>
     <nav class="tabs wrap" role="tablist" aria-label="Library"><button id="tabHoles" class="on" role="tab" aria-selected="true" type="button">Holes</button><button id="tabCourses" role="tab" aria-selected="false" type="button">Courses</button></nav>
     <div class="wrap" id="holesPane"><div class="grid" id="holeGrid"></div></div>
     <div class="wrap" id="coursesPane" hidden><div class="grid" id="courseGrid"></div></div>

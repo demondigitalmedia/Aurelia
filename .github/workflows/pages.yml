@@ -29,13 +29,7 @@ jobs:
           node tests/randomizer.test.js
           node tests/tunnels.test.js
       - name: Build the pages
-        run: |
-          python build.py --site
-          python build_builder.py --site
-          mkdir -p _site
-          cp site/index.html _site/index.html
-          cp dist/aurelia-builder-site.html _site/builder.html
-          cp dist/aurelia-terraces-site.html _site/terraces.html
+        run: python build_site.py
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

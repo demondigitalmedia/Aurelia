@@ -1,0 +1,31 @@
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#15132a">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Aurelia">
+<script>
+/* Installable app (site build only): service worker, install prompt, persistent storage. */
+(function () {
+  if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+    addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+  }
+  var A = window.AureliaApp = { prompt: null, buttons: [] };
+  A.standalone = function () { return (matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true; };
+  function sync() { A.buttons.forEach(function (b) { b.hidden = !A.prompt || A.standalone(); }); }
+  A.persist = function () {
+    try { var s = navigator.storage; if (s && s.persist) return s.persisted().then(function (p) { return p || s.persist(); }).catch(function () { return false; }); } catch (e) {}
+    return Promise.resolve(false);
+  };
+  A.install = function () {
+    var p = A.prompt; if (!p) return Promise.resolve(false);
+    A.prompt = null; sync();
+    p.prompt();
+    return p.userChoice.then(function (c) { return c && c.outcome === 'accepted'; }, function () { return false; });
+  };
+  A.bind = function (btn) { if (!btn) return; A.buttons.push(btn); btn.addEventListener('click', function () { A.install(); }); sync(); };
+  addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); A.prompt = e; sync(); });
+  addEventListener('appinstalled', function () { A.prompt = null; sync(); A.persist(); });
+})();
+</script>
