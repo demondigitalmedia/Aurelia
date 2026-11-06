@@ -38,6 +38,7 @@ site/index.html   GitHub Pages landing page
 site/manifest.webmanifest, site/sw.js, site/icons/   installable app: manifest, service worker template, icons
 src/pwa-head.html head tags and install/offline script for the site builds
 tests/            Node tests for the solver, templates, randomizer and tunnels
+tools/bench.js    render and solver benchmark (needs Playwright with Chromium)
 build.py          builds The Terraces page
 build_builder.py  builds the Course Builder page
 build_site.py     builds both with --site and assembles the Pages site in _site/
@@ -59,7 +60,11 @@ python3 build_builder.py --local   # offline copy that loads vendor/three.min.js
 
 python3 build_site.py                       # the whole Pages site in _site/
 python3 -m http.server -d _site 8000        # test the app, offline mode and install at localhost:8000
+
+node tools/bench.js                         # after the --local builds: ms per frame, draw calls, solver ms
 ```
+
+Add `#bench` to a page URL (for example `builder.html#bench`) for a corner readout of frame time, draw calls, triangles and pixel ratio on any device.
 
 Each build is a single self-contained HTML file. Open the `--local` build straight from disk to test without a network. With no flag, the build is the version published as a Claude artifact.
 

@@ -40,7 +40,7 @@
 
   let ALL = null, PLANTS = null;
   // the game plays whatever hole it is handed (the Terraces, or one you built)
-  function setWorld(w) { W = w; ALL = null; PLANTS = null; }
+  function setWorld(w) { W = w; ALL = null; PLANTS = null; SOLVES.clear(); }
   function world() {
     if (!ALL) { PLANTS = W.plants(); ALL = W.solidsFor(PLANTS); }
     return { plants: PLANTS, solids: ALL };
@@ -90,7 +90,19 @@
      A spot in the air (the chains, a gap): the arm speed that passes through it at that height.
      Fixed launch for the disc; the aim is walked in until the line is on the spot. Trees are ignored here:
      the solve is the line you asked for, the forest decides what happens to it. */
+  // The solve runs about 100 short flights, so it flies them at SOLVE_HZ (the real throw stays at the engine's 400 Hz);
+  // at 150 Hz the landing moves by about 0.1 m. Results are kept per lie, disc, target and hole.
+  const SOLVE_HZ = 150, SOLVES = new Map();
   function solveTo(E, lie, discIndex, target) {
+    const d = DISCS[discIndex];
+    const key = [lie.x, lie.y, target.x, target.y, target.z, target.air ? 1 : 0].map(v => (+v || 0).toFixed(3)).join(',') + '|' + discIndex + ':' + d.nums.join(',');
+    const hit = SOLVES.get(key);
+    if (hit) return Object.assign({}, hit);
+    const sol = solveFresh(E, lie, discIndex, target);
+    if (SOLVES.size >= 64) SOLVES.delete(SOLVES.keys().next().value);
+    SOLVES.set(key, sol); return Object.assign({}, sol);
+  }
+  function solveFresh(E, lie, discIndex, target) {
     const d = DISCS[discIndex], zg = W.G(lie.x, lie.y);
     const tx = target.x - lie.x, ty = target.y - lie.y, dist = Math.max(0.5, Math.hypot(tx, ty));
     const bd = Math.hypot(W.BASKET.x - lie.x, W.BASKET.y - lie.y);
@@ -110,7 +122,7 @@
     function solveWith(hz) {
     let aim = direct;
     const run = (mph) => {
-      const r = E.P.simulate({ disc: discOf(d), hand: 'RHBH', armSpeed: mph, spin: spinFor(mph), hyzer: hz, nose, launchAngle: la, aim, releaseHeight: RELEASE_FT, windVec: WIND, gust: 0, seed: 1, groundFt });
+      const r = E.P.simulate({ disc: discOf(d), hand: 'RHBH', armSpeed: mph, spin: spinFor(mph), hyzer: hz, nose, launchAngle: la, aim, releaseHeight: RELEASE_FT, windVec: WIND, gust: 0, seed: 1, groundFt, stepHz: SOLVE_HZ });
       const ux = tx / dist, uy = ty / dist;
       let prev = null, zAt = null, lat = 0, land = 0, latEnd = 0;
       for (const s of r.samples) {

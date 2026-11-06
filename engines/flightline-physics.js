@@ -214,7 +214,7 @@
       gust: 0,
     };
 
-    const hz = CAL.stepHz || 400, dt = 1 / hz, recordEvery = Math.max(1, Math.round(hz / 50));               // record at 50 samples/s
+    const hz = p.stepHz || CAL.stepHz || 400, dt = 1 / hz, recordEvery = Math.max(1, Math.round(hz / 50));               // record at 50 samples/s
     const samples = [];
     let t = 0, step = 0, spinAngle = 0;
     let maxZ = pos.z, maxV = v0;

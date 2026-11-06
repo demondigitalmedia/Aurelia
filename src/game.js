@@ -20,6 +20,9 @@
   var renderer = new T.WebGLRenderer({ canvas: canvas, antialias: true, powerPreference: 'high-performance' });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
   renderer.shadowMap.enabled = true; renderer.shadowMap.type = T.PCFSoftShadowMap;
+  // the sun never moves and nothing that casts a shadow moves, so the shadow map is drawn once per world and after tree edits
+  renderer.shadowMap.autoUpdate = false;
+  function reshadow() { renderer.shadowMap.needsUpdate = true; }
   var scene = new T.Scene();
   var camera = new T.PerspectiveCamera(52, 1, 0.45, 9000);
   var composer = null, bloom = null;
@@ -38,6 +41,36 @@
     if (typeof POINT_U !== 'undefined') POINT_U.scale.value = h * renderer.getPixelRatio() / 2;
   }
   window.addEventListener('resize', resize);
+  // adaptive resolution: drop the pixel ratio when frames run slow, raise it again when they run fast.
+  // Steps of 0.1 between 0.7 and min(devicePixelRatio, 1.75), with hysteresis so it does not hunt.
+  var PERF = { max: Math.min(window.devicePixelRatio || 1, 1.75), min: 0.7, prev: 0, avg: 16.7, hold: 0, fast: 0, slowDrops: 0 };
+  PERF.min = Math.min(PERF.min, PERF.max);
+  function perfReset() { PERF.prev = 0; PERF.hold = performance.now() + 2500; PERF.fast = 0; }
+  function setRatio(r) {
+    r = Math.round(clamp(r, PERF.min, PERF.max) * 100) / 100; if (Math.abs(r - renderer.getPixelRatio()) < 0.01) return;
+    renderer.setPixelRatio(r); if (composer && composer.setPixelRatio) composer.setPixelRatio(r); resize();
+  }
+  // #bench in the URL: a corner readout of ms per frame, draw calls, triangles and pixel ratio, for testing on devices
+  var BENCH = /bench/.test(location.hash) ? { el: null, n: 0, ms: 0, at: 0 } : null;
+  function benchTick(d) {
+    if (!BENCH || !d) return;
+    if (!BENCH.el) { BENCH.el = document.createElement('div'); BENCH.el.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);top:calc(4px + env(safe-area-inset-top,0px));z-index:99;font:12px ui-monospace,monospace;color:#fff;background:rgba(0,0,0,.6);padding:3px 8px;border-radius:8px;pointer-events:none;white-space:nowrap'; document.body.appendChild(BENCH.el); }
+    BENCH.n++; BENCH.ms += d;
+    if (performance.now() - BENCH.at > 500) {
+      var i = renderer.info.render; BENCH.el.textContent = (BENCH.ms / BENCH.n).toFixed(1) + ' ms · ' + i.calls + ' calls · ' + Math.round(i.triangles / 1000) + 'k tris · dpr ' + renderer.getPixelRatio().toFixed(2) + ' · cell ' + CELL + (composer && glow ? ' · bloom' : '');
+      BENCH.n = 0; BENCH.ms = 0; BENCH.at = performance.now();
+    }
+  }
+  if (BENCH) renderer.info.autoReset = false;
+  function perfTick(now) {
+    var d = PERF.prev ? now - PERF.prev : 0; PERF.prev = now; benchTick(d);
+    if (!d || d > 250 || now < PERF.hold || document.hidden) return;     // first frame, a stall, a tab switch, shaders compiling
+    PERF.avg += (d - PERF.avg) * 0.05;
+    var r = renderer.getPixelRatio();
+    if (PERF.avg > 24 && r > PERF.min) { setRatio(r - 0.1); PERF.slowDrops++; PERF.hold = now + 1200; PERF.fast = 0; }
+    else if (PERF.avg < 18 && r < PERF.max) { PERF.fast += d; if (PERF.fast > 4000 + 2000 * Math.min(PERF.slowDrops, 5)) { setRatio(r + 0.1); PERF.hold = now + 1500; PERF.fast = 0; } }
+    else PERF.fast = 0;
+  }
 
   /* ---------------- palettes: day and glow ---------------- */
   var PAL = {
@@ -211,7 +244,7 @@
       if (!low && R() < 0.6) { c.setHex(0x26503a).lerp(_c2.setHex(0x3a7046), R()); put(mc, x, y, z - 2, h * 0.9, h, h * 0.9, 0, c); }
       else { c.setHex(0x3f7a38).lerp(_c2.setHex(0x6aa242), R()); put(mb, x, y, z - 2, h * 0.9, h * 0.75, h * 0.9, R() * 6, c); }
     }
-    [mc, mb].forEach(function (m) { m.instanceMatrix.needsUpdate = true; m.instanceColor.needsUpdate = true; });
+    [mc, mb].forEach(function (m) { chunk(m, 256); });
   }
   function buildFar(rect) {
     var C = boundsCentre(), rings = 46, segs = 160, pos = [], cl = [], idx = [];
@@ -356,6 +389,43 @@
     m.castShadow = !(opts && opts.noShadow); m.receiveShadow = false; withColors(m); m.count = 0; m.frustumCulled = false;
     plantMats.push(m.material); (PG || WG).add(m); return m;
   }
+  // Split a filled instanced mesh into cells of `size` metres, each with its own bounding sphere, so frustum culling
+  // (the camera's and the shadow camera's) can skip the cells out of view. The cells share the original geometry's
+  // attributes (one GPU buffer) through light proxy geometries, and share its material. The original mesh leaves
+  // the scene but stays the handle: its material is the cells' material, and mesh.cells lists them.
+  function chunk(m, size) {
+    var parent = m.parent, n = m.count; m.cells = [];
+    if (!parent || !n) return m;
+    var geo = m.geometry; if (!geo.boundingSphere) geo.computeBoundingSphere();
+    var gs = geo.boundingSphere, gr = gs.radius + gs.center.length(), im = m.instanceMatrix.array, ic = m.instanceColor && m.instanceColor.array, B = {};
+    for (var i = 0; i < n; i++) { var k = Math.floor(im[i * 16 + 12] / size) + ',' + Math.floor(im[i * 16 + 14] / size); (B[k] || (B[k] = [])).push(i); }
+    Object.keys(B).forEach(function (k) {
+      var ids = B[k], g = new T.BufferGeometry();
+      Object.keys(geo.attributes).forEach(function (a) { g.setAttribute(a, geo.attributes[a]); });
+      if (geo.index) g.setIndex(geo.index);
+      geo.groups.forEach(function (q) { g.addGroup(q.start, q.count, q.materialIndex); });
+      var c = new T.InstancedMesh(g, m.material, ids.length); withColors(c);
+      var cx = 0, cy = 0, cz = 0;
+      ids.forEach(function (i, j) {
+        c.instanceMatrix.array.set(im.subarray(i * 16, i * 16 + 16), j * 16);
+        if (ic) c.instanceColor.array.set(ic.subarray(i * 3, i * 3 + 3), j * 3);
+        cx += im[i * 16 + 12]; cy += im[i * 16 + 13]; cz += im[i * 16 + 14];
+      });
+      var ctr = new T.Vector3(cx / ids.length, cy / ids.length, cz / ids.length), rad = 0;
+      ids.forEach(function (i) {
+        var o = i * 16, sc = Math.sqrt(Math.max(im[o] * im[o] + im[o + 1] * im[o + 1] + im[o + 2] * im[o + 2], im[o + 4] * im[o + 4] + im[o + 5] * im[o + 5] + im[o + 6] * im[o + 6], im[o + 8] * im[o + 8] + im[o + 9] * im[o + 9] + im[o + 10] * im[o + 10]));
+        rad = Math.max(rad, Math.hypot(im[o + 12] - ctr.x, im[o + 13] - ctr.y, im[o + 14] - ctr.z) + gr * sc);
+      });
+      g.boundingSphere = new T.Sphere(ctr, rad);
+      c.castShadow = m.castShadow; c.receiveShadow = m.receiveShadow; c.frustumCulled = true;
+      c.instanceMatrix.needsUpdate = true; c.instanceColor.needsUpdate = true;
+      parent.add(c); m.cells.push(c);
+    });
+    parent.remove(m); return m;
+  }
+  // 128 m: measured on randomizer holes, 64 m cells tripled the draw calls for ~4% fewer triangles in the aim views;
+  // 128 m adds ~50 draw calls and saves ~30% of the triangles when walking or orbiting close. #cell=N overrides it to compare.
+  var CELL = +((/cell=(\d+)/.exec(location.hash) || [])[1]) || 128;
   // r128 sizes instanceColor from .count on first use, so give every instanced mesh its colour buffer up front
   function withColors(m) { m.instanceColor = new T.InstancedBufferAttribute(new Float32Array(m.instanceMatrix.count * 3).fill(1), 3); return m; }
   var _m = new T.Matrix4(), _q = new T.Quaternion(), _s = new T.Vector3(), _p = new T.Vector3(), _e = new T.Euler(), _cc = new T.Color(), _up = new T.Vector3(0, 1, 0), _dv = new T.Vector3();
@@ -378,7 +448,7 @@
   }
   function buildPlants(list, keepGeo) {
     if (!keepGeo || !GEO.pine) makePlantGeos();
-    if (PG) { WG.remove(PG); PG.children.forEach(function (m) { m.material.dispose(); m.dispose && m.dispose(); }); }
+    if (PG) { WG.remove(PG); PG.children.forEach(function (m) { m.material.dispose(); m.geometry.dispose(); m.dispose && m.dispose(); }); }
     PG = new T.Group(); WG.add(PG); plantMats = [];
     var n = { pine: 0, broad: 0, palm: 0, bush: 0, fern: 0, guardian: 0, oak: 0 }; list.forEach(function (p) { n[p.type]++; });
     var M = {
@@ -404,7 +474,7 @@
       } else if (p.type === 'bush') put(M.bush, p.x, p.y, p.z - 0.15, p.r * 1.4, p.h, p.r * 1.4, p.rot, col);
       else put(M.fern, p.x, p.y, p.z + p.h * 0.35, p.r * 2.2, p.h * 1.1, p.r * 2.2, p.rot, col);
     });
-    Object.keys(M).forEach(function (k) { M[k].instanceMatrix.needsUpdate = true; if (M[k].instanceColor) M[k].instanceColor.needsUpdate = true; });
+    Object.keys(M).forEach(function (k) { chunk(M[k], CELL); });
     return M;
   }
   // fade the leaves so you can see out of the woods (the trunks stay solid)
@@ -435,7 +505,7 @@
         for (var q = 0; q < cn && flowers.count < 6500; q++) { var fx = cx2 + (R() - 0.5) * 1.2, fy = cy2 + (R() - 0.5) * 1.2; put(flowers, fx, fy, Wd.H(fx, fy) + 0.18 + R() * 0.25, 1, 1, 1, R() * 6, tc.setHex(fc)); }
       }
     }
-    [tufts, flowers].forEach(function (m) { m.instanceMatrix.needsUpdate = true; if (m.instanceColor) m.instanceColor.needsUpdate = true; });
+    [tufts, flowers].forEach(function (m) { chunk(m, CELL); });
     return { tufts: tufts, flowers: flowers };
   }
 
@@ -665,7 +735,7 @@
     plate.position.set(Math.sin(ta) * (S.bandR + 0.004), bandB + S.bandH / 2, -Math.cos(ta) * (S.bandR + 0.004)); plate.rotation.y = Math.atan2(Math.sin(ta), -Math.cos(ta)); grp.add(plate);
     // chains: a steel rod for every link segment (and a hairline so they still read from far away)
     var defs = E.FB.strandDefs(S), P = S.segments + 1, nStr = defs.length, nSeg = nStr * S.segments;
-    var links = new T.InstancedMesh(new T.CylinderGeometry(1, 1, 1, 5).translate(0, 0.5, 0), new T.MeshPhongMaterial({ color: 0xe6ebef, specular: 0xffffff, shininess: 90 }), nSeg); links.frustumCulled = false; links.castShadow = true; grp.add(links);
+    var links = new T.InstancedMesh(new T.CylinderGeometry(1, 1, 1, 5).translate(0, 0.5, 0), new T.MeshPhongMaterial({ color: 0xe6ebef, specular: 0xffffff, shininess: 90 }), nSeg); links.frustumCulled = false; links.castShadow = false; grp.add(links);
     var cpos = new Float32Array(nSeg * 2 * 3), cgeo = new T.BufferGeometry(); cgeo.setAttribute('position', new T.BufferAttribute(cpos, 3));
     var chainMat = new T.LineBasicMaterial({ color: 0xe9eef2, transparent: true, opacity: 0.55 });
     var ch = new T.LineSegments(cgeo, chainMat); ch.frustumCulled = false; grp.add(ch);
@@ -751,10 +821,13 @@
     var r = E.FB.DISC.R || 0.1055;
     var g = new T.LatheGeometry([[0.001, -0.008], [r * 0.9, -0.01], [r, -0.004], [r, 0.004], [r * 0.92, 0.01], [0.001, 0.011]].map(function (p) { return new T.Vector2(p[0], p[1]); }), 32);
     var mat = new T.MeshLambertMaterial({ color: 0xf2a13b, emissive: 0x000000 });
-    var m = new T.Mesh(g, mat); m.castShadow = true;
+    var m = new T.Mesh(g, mat);
     var stamp = new T.Mesh(new T.CircleGeometry(r * 0.55, 20), new T.MeshBasicMaterial({ color: 0xfff3df })); stamp.rotation.x = -Math.PI / 2; stamp.position.y = 0.0115; m.add(stamp);
     var halo = new T.Sprite(new T.SpriteMaterial({ map: softDot, color: 0xffffff, transparent: true, opacity: 0.6, depthWrite: false, blending: T.AdditiveBlending })); halo.scale.set(0.9, 0.9, 1);
     var grp = new T.Group(); grp.add(m); scene.add(grp); scene.add(halo);
+    // a soft blob on the ground under the disc stands in for its shadow (the shadow map is static)
+    var blob = new T.Mesh(new T.PlaneGeometry(1, 1), new T.MeshBasicMaterial({ map: softDot, color: 0x000000, transparent: true, opacity: 0.4, depthWrite: false, fog: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
+    blob.rotation.x = -Math.PI / 2; blob.renderOrder = 2; scene.add(blob);
     var TN = 260, tpos = new Float32Array(TN * 3), tcol = new Float32Array(TN * 3), tg = new T.BufferGeometry();
     tg.setAttribute('position', new T.BufferAttribute(tpos, 3)); tg.setAttribute('color', new T.BufferAttribute(tcol, 3)); tg.setDrawRange(0, 0);
     var trail = new T.Line(tg, new T.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.9, blending: T.AdditiveBlending, depthWrite: false })); trail.frustumCulled = false; scene.add(trail);
@@ -763,7 +836,7 @@
     for (var i = 0; i < TN - 1; i++) { var a = i * 2; ridx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
     rg.setAttribute('position', new T.BufferAttribute(rpos, 3)); rg.setAttribute('color', new T.BufferAttribute(rcol, 3)); rg.setIndex(ridx); rg.setDrawRange(0, 0);
     var rib = new T.Mesh(rg, new T.MeshBasicMaterial({ vertexColors: true, transparent: true, blending: T.AdditiveBlending, depthWrite: false, side: T.DoubleSide })); rib.frustumCulled = false; rib.visible = false; scene.add(rib);
-    return { grp: grp, mesh: m, mat: mat, halo: halo, trail: trail, tpos: tpos, tcol: tcol, TN: TN, pts: [], rib: rib, rpos: rpos, rcol: rcol };
+    return { grp: grp, mesh: m, mat: mat, halo: halo, blob: blob, trail: trail, tpos: tpos, tcol: tcol, TN: TN, pts: [], rib: rib, rpos: rpos, rcol: rcol };
   }
   function buildAimLine() {
     var n = 90, g = new T.BufferGeometry(); g.setAttribute('position', new T.BufferAttribute(new Float32Array(n * 3), 3));
@@ -810,7 +883,7 @@
     sunTarget = V(c.x, c.y, (Wd.TEE_Z + basket.z) / 2); sun.position.copy(sunTarget).addScaledVector(SUN, 600); sun.target.position.copy(sunTarget);
     sc.left = sc.bottom = -ext; sc.right = sc.top = ext; sc.far = 1400; sc.updateProjectionMatrix();
     INTRO = introPath();
-    applyLook();
+    applyLook(); reshadow(); perfReset();
     var H0 = Wd.HOLE;
     $('cardK').textContent = (H0.course ? H0.course + ' · ' : 'Aurelia · ') + 'Hole ' + (H0.number || 1);
     $('cardH').textContent = H0.title || (H0.name.charAt(0) + H0.name.slice(1).toLowerCase());
@@ -852,7 +925,7 @@
   // the hole's trees changed (resized, removed, planted): rebuild the forest and the physics that goes with it
   function refreshPlants() {
     var rec = SEL.p && SEL.p.rec; PL.setWorld(Wd); world = PL.world(); SPOT = { key: '', v: null, near: [] };
-    var was = seeThrough; seeThrough = false; buildPlants(world.plants, true); setSee(was); applyLook();
+    var was = seeThrough; seeThrough = false; buildPlants(world.plants, true); setSee(was); applyLook(); reshadow();
     return rec ? selectTree(rec) : null;
   }
   // are you standing in the woods? (inside a crown's footprint, or a trunk right in front of you)
@@ -874,7 +947,7 @@
     stars.visible = glow; aurora.visible = glow;
     planet.userData.body.material.opacity = glow ? 1 : 0.5; planet.userData.ring.material.opacity = glow ? 0.95 : 0.45;
     glowOnly.forEach(function (o) { o.visible = glow; }); dayOnly.forEach(function (o) { o.visible = !glow; });
-    under.flowers.material = glow ? flowerMats.glow : flowerMats.day;
+    under.flowers.material = glow ? flowerMats.glow : flowerMats.day; under.flowers.cells.forEach(function (c) { c.material = under.flowers.material; });
     BIO.amt.value = glow ? 1 : 0;
     basket.chainMat.color.setHex(glow ? 0x9ff8ff : 0xe9eef2); basket.chainMat.opacity = glow ? 0.8 : 0.55; basket.links.material.emissive.setHex(glow ? 0x167888 : 0x000000);
     var wm = water.water.material; wm.color.setHex(glow ? 0x0b1f44 : 0x48b4c2); wm.emissive.setHex(glow ? 0x06304e : 0x000000); wm.opacity = glow ? 0.92 : 0.86;
@@ -1354,6 +1427,10 @@
     _n.set(nx, nz, -ny).normalize(); disc.grp.quaternion.setFromUnitVectors(_up, _n);
     _qs.setFromAxisAngle(_up, spin || 0); disc.grp.quaternion.multiply(_qs);
     disc.halo.position.copy(disc.grp.position);
+    // blob shadow: on the ground (or the water) below, fading and spreading with height
+    var gz = Math.max(Wd.G(wx, wy), Wd.isWater && Wd.isWater(wx, wy) ? Wd.WATER : -1e9), ht = wz - gz;
+    disc.blob.visible = ht > -0.05 && ht < 25;
+    if (disc.blob.visible) { var bs = 0.3 + Math.max(0, ht) * 0.05; disc.blob.position.set(wx, gz + 0.04, -wy); disc.blob.scale.set(bs, bs, 1); disc.blob.material.opacity = (glow ? 0.25 : 0.45) * (1 - clamp(ht / 25, 0, 1)); }
   }
   function surfName(x, y) {
     if (Wd.surfName) { var nm = Wd.surfName(x, y); return nm === 'forest floor' ? 'in the trees' : nm; }
@@ -1612,7 +1689,10 @@
     basket.pin.scale.set(pd * 0.03, pd * 0.0375, 1); basket.pin.position.y = 3.2 + pd * 0.012; basket.pin.visible = pd > 18 && G.mode !== 'intro';
     // the halo keeps the disc findable at a distance
     var dd = camera.position.distanceTo(disc.grp.position); disc.halo.scale.setScalar(clamp(dd * 0.035, 0.5, 4) * (glow ? 1.3 : 1));
-    if (composer) composer.render(); else renderer.render(scene, camera);
+    // bloom only earns its cost at night; the day look renders straight to the screen
+    if (BENCH) renderer.info.reset();
+    if (composer && glow) composer.render(); else renderer.render(scene, camera);
+    perfTick(now);
   }
 
   /* ---------------- look mode: orbit the hole you are building ---------------- */
@@ -1728,11 +1808,11 @@
     setSee: function (v) { G.see = !!v; $('bSee').classList.toggle('on', G.see); }, isSee: function () { return !!G.see; },
     lookState: function () { return { x: ORB.fx, y: ORB.fy, yaw: ORB.yaw, dist: ORB.dist, walking: WALK.on }; }, setGlow: function (v) { glow = !!v; applyLook(); }, isGlow: function () { return glow; },
   };
-  window.__aur = { WALK: WALK, SEL: SEL, pickTree: pickTree, setSee: setSee, scene: scene, ff: function (t) { G.playT += t; }, G: G, get Wd() { return Wd; }, PL: PL, E: E, camera: camera, skipIntro: skipIntro, throwIt: throwIt, pickTarget: pickTarget, setTarget: setTarget, screenOf: screenOf, L: function () { return L; }, setGlow: function (v) { glow = v; applyLook(); }, toAim: toAim, renderer: renderer, ORB: ORB };
+  window.__aur = { WALK: WALK, SEL: SEL, pickTree: pickTree, setSee: setSee, scene: scene, ff: function (t) { G.playT += t; }, G: G, get Wd() { return Wd; }, PL: PL, E: E, camera: camera, skipIntro: skipIntro, throwIt: throwIt, pickTarget: pickTarget, setTarget: setTarget, screenOf: screenOf, L: function () { return L; }, setGlow: function (v) { glow = v; applyLook(); }, toAim: toAim, renderer: renderer, ORB: ORB, PERF: PERF, setRatio: setRatio, composer: composer };
   function boot() {
     init(); loadWorld(AureliaWorld);
     var q = location.hash.replace('#', '');
-    if (q === 'glow') { glow = true; applyLook(); }
+    if (/(^|&)glow(&|$)/.test(q)) { glow = true; applyLook(); }
     camPos.copy(V(-55, -55, 120)); camLook.copy(V(5, 120, 40));
     playHole({});
   }

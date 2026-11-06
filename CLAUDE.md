@@ -16,13 +16,11 @@ See README.md for the layout, build and test commands.
 - Engine frame: metres, x right, y downrange, z up; three.js gets (x, z, -y).
 - Run all four tests in tests/ before pushing. The Pages workflow runs them too.
 - Physics engines in engines/ are shared with Putt League. Change calibration only on purpose and say so.
+- Performance: the shadow map is static (call reshadow() after anything that changes what casts shadows); plants, tufts, flowers and far trees are split into culling cells by chunk(); bloom runs in glow only; the pixel ratio adapts to frame time; the aim solver flies at 150 Hz (sim.stepHz) and is memoized. tools/bench.js measures it (needs Playwright).
 
-## Next up (planned, not started)
-1. Performance:
-   - Static shadow map: shadowMap.autoUpdate false, update on load and tree edits; disc gets a blob shadow instead of casting.
-   - Chunk the instanced trees, tufts and flowers into ~64 m cells with their own bounding spheres so frustum culling works (proxy geometries share attributes).
-   - Skip the bloom composer in day mode; keep it for glow.
-   - Adaptive pixel ratio from frame time (0.7 to min(dpr, 1.75)).
-   - Aim solver: coarser physics step (CAL.stepHz around 150) and memoize per lie, disc and target. The real throw stays at 400 Hz.
-   - Benchmark before and after (ms per frame, draw calls, solver ms).
+## Next up
+1. Performance follow-ups (the pass itself is done; see below):
+   - Check on Damion's devices with builder.html#bench and terraces.html#bench (corner readout: ms, draw calls, triangles, pixel ratio). Compare #cell=100000 (no culling cells) against the default 128.
+   - Day mode now renders straight to the canvas, so it gets the browser's 4x antialiasing (the composer target never had it). If day runs slower than glow on the tablet, that is the likely cost.
+   - The big remaining cost is triangles (~1.7M per frame on a dense hole, mostly tree crowns, tufts and the terrain), not draw calls. Tree LOD would be the next lever.
 2. Physics: drivers turn over too hard at the arm speeds the game uses (design speed ~10 + 2.54 x speed mph is far below game arms of 60 to 80 mph). Recalibrate with Damion's sign-off since Putt League shares the engine.
