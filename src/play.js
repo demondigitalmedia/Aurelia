@@ -31,7 +31,8 @@
   function customList() { return DISCS.slice(BASE_N).map(d => ({ id: d.id, name: d.name, nums: d.nums.slice(), color: d.color })); }
   const discOf = d => ({ speed: d.nums[0], glide: d.nums[1], turn: d.nums[2], fade: d.nums[3] });
   // the bag for a lie: the longer the throw, the faster the disc
-  function discForDist(m) { return m > 150 ? 5 : m > 100 ? 4 : m > 60 ? 3 : m > 22 ? 2 : 0; }
+  // bands set with the stable-driver calibration: the bomber carries ~140 m at full arm, the rocket ~160 m
+  function discForDist(m) { return m > 130 ? 6 : m > 110 ? 5 : m > 100 ? 4 : m > 60 ? 3 : m > 22 ? 2 : 0; }
   const spinFor = mph => 300 + 16 * mph;
   const WIND = { x: 2.6, y: -1.4 };                         // mph, a breeze up out of the basin toward the tee, a little right
   const MAX_SOLVE_MPH = 80, MAX_MPH = 96;

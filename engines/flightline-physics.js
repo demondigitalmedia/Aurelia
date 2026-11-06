@@ -39,6 +39,12 @@
    impact wobble from the ground is carried into the slide. An optional release wobble
    (p.wobble, rad/s) models a jerky, off-axis release; a clean release has none.
 
+   v1.7: drivers hold stable at the arm speeds players use (Aurelia throws 50 to 80 mph). A disc's base
+   nose-up hold grows with its speed rating above 3 (cm_perSpeedAbove3), the way wide-rim drivers stay
+   stable at speeds that flip a putter. Putters (speed 1 to 3) fly exactly as in v1.6; mids change a little,
+   fairways and drivers a lot (see the Aurelia commit for before/after tables). Optional p.stepHz runs a
+   flight at a coarser step (a quick preview); without it the step is 400 Hz as before.
+
    Coordinates (SI internally, feet/mph at the edges):
      +x = right of the thrower (facing the basket), +y = downrange, +z = up.
    ===================================================================== */
@@ -74,6 +80,7 @@
     cma_base: 0.0579, cma_perFade: 0.02,           // nose-up growth near zero angle of attack
     cmq_base: 0.4641, cmq_perFade: 0.1073,           // extra nose-up at high angle of attack (late fade)
     cm_perFadeOffset: 0.006,                     // extra nose-up bias per fade point
+    cm_perSpeedAbove3: 0.0008,                       // wide-rim drivers hold stable at speeds that flip a putter (putters, speed 1 to 3, unchanged)
     cm_turnPerPoint: 0.012,                      // nose-down per point of turn when at speed
     turnOnsetFrac: 0.78,                         // turn starts at this fraction of design speed
     turnFullFrac: 1.12,                          // turn fully expressed at this fraction
@@ -106,7 +113,7 @@
       alpha0: CAL.alpha0 * DEG,
       cl0: CAL.cl0_base + CAL.cl0_perGlide * d.glide + CAL.cl0_perSpeed * sp,
       cla: CAL.cla,
-      cm0: CAL.cm0_base + CAL.cm_perFadeOffset * d.fade,
+      cm0: CAL.cm0_base + CAL.cm_perFadeOffset * d.fade + CAL.cm_perSpeedAbove3 * Math.max(0, sp - 3),
       cma: CAL.cma_base + CAL.cma_perFade * d.fade,
       cmq: CAL.cmq_base + CAL.cmq_perFade * d.fade,
       turn: Math.min(0, d.turn),                         // only negative turn adds turn
