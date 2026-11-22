@@ -253,6 +253,10 @@
       inp.addEventListener('input', function () { d.name = inp.value.trim() || 'Untitled hole'; refreshTitle(); markDirty(); }); b.appendChild(inp);
       b.appendChild(el('div', 'tsec', 'Par'));
       var pr = el('div', 'row'); [3, 4, 5].forEach(function (n) { var x = button('Par ' + n, 'chip' + (d.par === n ? ' on' : ''), function () { d.par = n; [].forEach.call(pr.children, function (c) { c.classList.toggle('on', c === x); }); refreshTitle(); markDirty(); }); pr.appendChild(x); }); b.appendChild(pr);
+      b.appendChild(el('div', 'tsec', 'Biome'));
+      var cur = HW.biomeOf(d), bm = el('div', 'row'), bnote = el('p', '', '');
+      HW.BIOMES.forEach(function (o) { var x = button(o.name, 'chip' + (cur === o.id ? ' on' : ''), function () { d.biome = o.id; [].forEach.call(bm.children, function (c) { c.classList.toggle('on', c === x); }); bnote.textContent = o.blurb; markDirty(); if (S.in3D) reload3D(); }); bm.appendChild(x); });
+      b.appendChild(bm); bnote.textContent = (HW.BIOMES.find(function (o) { return o.id === cur; }) || {}).blurb || ''; b.appendChild(bnote);
       b.appendChild(el('p', '', '')).style.marginTop = '12px';
       b.lastChild.textContent = holeFt(d) + ' ft from tee to basket. Suggested par for that length: ' + HW.suggestPar(d) + '.';
       if (d.inspired) b.appendChild(el('p', '', d.inspired));

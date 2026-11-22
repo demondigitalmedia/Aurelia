@@ -47,6 +47,96 @@
   var SUN = new T.Vector3(0.55, 0.66, 0.5).normalize();     // three-space directions toward the two suns
   var ROSE = new T.Vector3(-0.78, 0.28, -0.56).normalize();
 
+  /* ---------------- biome skins: the six looks from the Aurelia art direction ----------------
+     Each skin sets the sky, the light (hemisphere sky colour = the colour of the shadows), haze, the ground,
+     every plant, the far hills, water and the glow hero colours. Shadows are colours, never black. */
+  var SKINS = {
+    forest: { name: 'Elder Forest',
+      day: { top: 0x6aaed6, hor: 0xeef2d2, low: 0xcfe3d8, fog: 0xd3e6dc, fogD: 0.00075, hemiS: 0x9fc4e8, hemiG: 0x4a6a34, hemiI: 0.58, sunC: 0xffe7a3, sunI: 0.82, roseC: 0xffc9a0, roseI: 0.14 },
+      glow: { top: 0x03060a, hor: 0x10302c, low: 0x050a0c, fog: 0x0a1c21, fogD: 0.0012, hemiS: 0x297971, hemiG: 0x070a0e, hemiI: 0.58, sunC: 0x5fd6c6, sunI: 0.24, roseC: 0xffc05c, roseI: 0.05 },
+      surf: { short_grass_dry: [0x7cb24a, 0x9ccf5c], medium_grass_wet: [0x5e9a3e, 0x6fa34a], deep_grass: [0x3a5e34, 0x55803c], rock_slab: [0x7d8574, 0x98998a], flagstone: [0xb8a88a, 0xcdbd9c], hardpack_dirt: [0xc9a77a, 0xdcbe8e], moat_water: [0x25605e, 0x2f7570] },
+      plant: { pine: [[0x2b5838, 0x3e7a4f], [0x2f6a5e, 0x3a7a62]], broad: [[0x4f8a3e, 0x6fa34a], [0x447a36, 0x5e9a48]], palm: [[0x4c9c3e, 0x7cc050], [0x5aae48, 0x8ccf58]], bush: [[0x3c7838, 0x5e9a3c], [0x3f8a50, 0x5aa65a]], fern: [[0x3e7a4f, 0x5fae55], [0x48a650, 0x6fc062]], guardian: [[0x2c6650, 0x4a8c5a], [0x2a7a6c, 0x45a07c]], oak: [[0x5b7c2e, 0x8aa640], [0x6e8c34, 0xa6b84a]] },
+      accent: [0xd9b44a, 0xffe7a3], bark: [0x6b4a35, 0x80603e], stone: [0x8f8a74, 0xa9a88a], palmBark: [0x8a6c4c, 0xa98a62],
+      far: [0x2f5f38, 0x3f7440, 0x557f45, 0x8a84a6, 0xf1f3fb], farTree: [0x26503a, 0x3a7046, 0x3f7a38, 0x6aa242],
+      tuft: [0x5a9a3a, 0x8cc850], flowers: [0xffe7a3, 0xf2c14e, 0xa77bdb, 0xf3efe6, 0x7fd0ff],
+      water: [0x48b4c2, 0x0b1f2a, 0x0a4a44],
+      bio: { canopy: 0x3fd6c6, hero: 0xffc05c, tips: 0x7be07a, flower: 0xffc05c } },
+    lagoon: { name: 'Lagoon Jungle',
+      day: { top: 0x6fcaf2, hor: 0xfff3c8, low: 0xbdebff, fog: 0xd2f0ee, fogD: 0.0005, hemiS: 0x8fc8ff, hemiG: 0x3f7a40, hemiI: 0.6, sunC: 0xfff0c0, sunI: 0.85, roseC: 0xffb3c6, roseI: 0.16 },
+      glow: { top: 0x0c0d30, hor: 0x4a3aa0, low: 0x0f0c2a, fog: 0x1a174b, fogD: 0.0011, hemiS: 0x527aff, hemiG: 0x1b154b, hemiI: 0.67, sunC: 0x7a8cff, sunI: 0.31, roseC: 0xff4fd8, roseI: 0.06 },
+      surf: { short_grass_dry: [0x5fbf4a, 0x86d45c], medium_grass_wet: [0x3fa34d, 0x5cb855], deep_grass: [0x2f6e3a, 0x4a8a3c], rock_slab: [0x7e6a5a, 0x9a8470], flagstone: [0xf2d49b, 0xf7e0b4], hardpack_dirt: [0xf2d49b, 0xf7e3b8], moat_water: [0x2a9a9a, 0x3cc7c2] },
+      plant: { pine: [[0x2b6a48, 0x3e8a5a], [0x2f6a5e, 0x3a7a62]], broad: [[0x3fa34d, 0x6cc25a], [0x2f8f5a, 0x58b86a]], palm: [[0x4cb04a, 0x86d45c], [0x3fa34d, 0x7cc050]], bush: [[0x3c8a40, 0x5eaa48], [0x2f8f5a, 0x5aa65a]], fern: [[0x3fa34d, 0x7fd06a], [0x2f8f5a, 0x6fc062]], guardian: [[0x2a7a5c, 0x45a07c], [0x2f8f6c, 0x4cb08c]], oak: [[0x4f8a2e, 0x7aa640], [0x5e9a34, 0x96b84a]] },
+      accent: [0xe8504a, 0xff8ae6], bark: [0x7e6a5a, 0x9a8470], stone: [0x9c917c, 0xc2b597], palmBark: [0x9a7a56, 0xb8966a],
+      far: [0x2f7a48, 0x3f8a50, 0x5aa65a, 0x7e6a5a, 0xbfe6e0], farTree: [0x2f6a48, 0x3f8a5a, 0x3fa34d, 0x6cc25a],
+      tuft: [0x4fae4a, 0x86d45c], flowers: [0xe8504a, 0xff8ae6, 0xf2d49b, 0xffe36b, 0xff4fd8],
+      water: [0x3cc7c2, 0x101a5a, 0x2a1e7a],
+      bio: { canopy: 0x7a5cff, hero: 0xff4fd8, tips: 0xff8ae6, flower: 0xff4fd8 } },
+    river: { name: 'River Bend',
+      day: { top: 0x8ecbf0, hor: 0xffe3b3, low: 0xd8e8d0, fog: 0xf2e2c4, fogD: 0.00045, hemiS: 0xa0b8f0, hemiG: 0x5a7a30, hemiI: 0.55, sunC: 0xffd890, sunI: 0.9, roseC: 0xffa08a, roseI: 0.16 },
+      glow: { top: 0x1e1640, hor: 0xb0566a, low: 0x2a1e3a, fog: 0x36214b, fogD: 0.0009, hemiS: 0x634eba, hemiG: 0x2e2764, hemiI: 0.67, sunC: 0xe07a5f, sunI: 0.51, roseC: 0xb9a7e8, roseI: 0.12 },
+      surf: { short_grass_dry: [0x8cc63f, 0xa4d45a], medium_grass_wet: [0x6fa334, 0x86b844], deep_grass: [0x4f7a2e, 0x638c38], rock_slab: [0x8a7f9e, 0xa096b0], flagstone: [0xc9b089, 0xdcc49e], hardpack_dirt: [0xc48a52, 0xd4a06a], moat_water: [0x3a8aaa, 0x5bb8d9] },
+      plant: { pine: [[0x2f5a3a, 0x456f42], [0x2f6a5e, 0x3a7a62]], broad: [[0x5e9a30, 0x8cc63f], [0x4f8a34, 0x7ab83e]], palm: [[0x5e9a30, 0x86c84a], [0x5aae48, 0x8ccf58]], bush: [[0x4f8a2e, 0x6fa334], [0x5e9a34, 0x7ab83e]], fern: [[0x5e9a30, 0x8cc63f], [0x48a650, 0x6fc062]], guardian: [[0x3a6a48, 0x5a8c5a], [0x2a7a6c, 0x45a07c]], oak: [[0x6a8a2a, 0x9ab83e], [0x7a9a30, 0xaac44a]] },
+      accent: [0xf28b3c, 0xf7e36b], bark: [0x7a5a3a, 0x9a7448], stone: [0x9a8f8e, 0xb8aeb0], palmBark: [0x8a6c4c, 0xa98a62],
+      far: [0x4f7a3a, 0x5f8a42, 0x7aa04a, 0x9a8fae, 0xf4ece4], farTree: [0x2f5a3a, 0x456f42, 0x5e9a30, 0x8cc63f],
+      tuft: [0x6fa334, 0x9cd04a], flowers: [0xf28b3c, 0xf7e36b, 0xf3efe6, 0xa77bdb, 0x7fd0ff],
+      water: [0x5bb8d9, 0x1f3a6a, 0x1a6a8a],
+      bio: { canopy: 0x59d8ff, hero: 0x3ff0c0, tips: 0x3ff0c0, flower: 0xffc75a } },
+    boulder: { name: 'Boulder Hills',
+      day: { top: 0x7ab8e2, hor: 0xf6ddb0, low: 0xe8d2b0, fog: 0xf0dcc4, fogD: 0.0004, hemiS: 0x9a86c0, hemiG: 0x8a6a4a, hemiI: 0.6, sunC: 0xfff0d0, sunI: 0.85, roseC: 0xffc0a0, roseI: 0.14 },
+      glow: { top: 0x0c0a1e, hor: 0x3a2a66, low: 0x120f26, fog: 0x241f44, fogD: 0.001, hemiS: 0x5a4e94, hemiG: 0x201b44, hemiI: 0.64, sunC: 0xa47bff, sunI: 0.31, roseC: 0x4fe3c1, roseI: 0.06 },
+      surf: { short_grass_dry: [0xa8b46e, 0xbcc480], medium_grass_wet: [0x8fa36b, 0xa4b27a], deep_grass: [0x7e9460, 0x8fa36b], rock_slab: [0xd9a066, 0xe6b57c], flagstone: [0xeed6a2, 0xf2e0b8], hardpack_dirt: [0xc9955f, 0xd9b27a], moat_water: [0x4a8aa0, 0x5aa0b0] },
+      plant: { pine: [[0x4f6a4a, 0x6a8460], [0x4a6a58, 0x627e66]], broad: [[0x7e9460, 0x9cae74], [0x6f8a5a, 0x8fa36b]], palm: [[0x7e9460, 0x9cae74], [0x8fa36b, 0xa8b47a]], bush: [[0x7e9460, 0x8fa36b], [0x6f8a5a, 0x9cae74]], fern: [[0x7e9460, 0x9cae74], [0x8fa36b, 0xa8b47a]], guardian: [[0x5e7a5a, 0x7a946a], [0x5a8070, 0x74987c]], oak: [[0x8a9a5a, 0xa8b46e], [0x7e9460, 0x9cae74]] },
+      accent: [0xf2c46d, 0xd9a066], bark: [0x7a5a43, 0x946e52], stone: [0xc9a07a, 0xd9b48e], palmBark: [0x9a7a56, 0xb8966a],
+      far: [0xc9955f, 0xd9a874, 0xb9a07a, 0xb9a9c9, 0xf6e6d0], farTree: [0x5e7a52, 0x6f8a5a, 0x7e9460, 0x9cae74],
+      tuft: [0x8fa36b, 0xb5c47c], flowers: [0xf2c46d, 0xd9a066, 0xa77bdb, 0xf3efe6, 0xe8a0c0],
+      water: [0x5aa8c0, 0x1a2a4a, 0x1a5a5a],
+      bio: { canopy: 0x4fe3c1, hero: 0xa47bff, tips: 0x4fe3c1, flower: 0xf5b942 } },
+    spires: { name: 'Spire Desert',
+      day: { top: 0xb8a6e6, hor: 0xf7d8b0, low: 0xe8d0c0, fog: 0xe8d4e4, fogD: 0.0006, hemiS: 0xb8a0e0, hemiG: 0xc99a70, hemiI: 0.6, sunC: 0xfff0c8, sunI: 0.85, roseC: 0xffb0a0, roseI: 0.16 },
+      glow: { top: 0x0c0a1c, hor: 0x3b2b5e, low: 0x141128, fog: 0x201c3e, fogD: 0.001, hemiS: 0x634e8f, hemiG: 0x241e48, hemiI: 0.64, sunC: 0xcfc6ff, sunI: 0.37, roseC: 0xff5fb8, roseI: 0.05 },
+      surf: { short_grass_dry: [0xd9b878, 0xe8c48a], medium_grass_wet: [0xc9a46e, 0xdcb57c], deep_grass: [0xb89464, 0xcaa472], rock_slab: [0xd9785b, 0xe08f70], flagstone: [0xf0d8b0, 0xf7e3c4], hardpack_dirt: [0xe8c48a, 0xf0d4a0], moat_water: [0x4aa0a8, 0x6fb5b0] },
+      plant: { pine: [[0x4f7a68, 0x5f8a74], [0x4f7a68, 0x5f8a74]], broad: [[0x6f9a70, 0x8aae80], [0x5fa390, 0x7fb59a]], palm: [[0x5fa390, 0x6fb5a0], [0x4f9a88, 0x7fc4ae]], bush: [[0x8a9a6a, 0xa0aa78], [0x6fb5a0, 0x8fc4b0]], fern: [[0x6fb5a0, 0x8fc4b0], [0x5fa390, 0x7fb59a]], guardian: [[0x5fa390, 0x6fb5a0], [0x4f9a88, 0x7fc4ae]], oak: [[0x7a9a60, 0x9ab070], [0x7a9a60, 0x9ab070]] },
+      accent: [0xd9785b, 0xffb3de], bark: [0x7a5a43, 0x8e6a50], stone: [0xd9a088, 0xe8b8a0], palmBark: [0x7a5a43, 0x946e52],
+      far: [0xdda894, 0xe0b49a, 0xd09080, 0xc9a0b0, 0xf0dce8], farTree: [0x6f8a70, 0x7a9a7a, 0x8aa080, 0x9ab08a],
+      tuft: [0xb0a070, 0xc8b880], flowers: [0xd9785b, 0xffb3de, 0xf7e3c4, 0xc9b8e8, 0xf2c46d],
+      water: [0x6fb5b0, 0x1a1a40, 0x3a1a4a],
+      bio: { canopy: 0xff5fb8, hero: 0xf5b942, tips: 0xff5fb8, flower: 0xf5b942 } },
+    terraces: { name: 'Bloom Terraces',
+      day: { top: 0x8ccbee, hor: 0xfdf1d2, low: 0xe8e0c8, fog: 0xf2ead4, fogD: 0.00045, hemiS: 0xb0a0e0, hemiG: 0x7a8a40, hemiI: 0.58, sunC: 0xfff0d0, sunI: 0.85, roseC: 0xffb3c6, roseI: 0.16 },
+      glow: { top: 0x0e0a20, hor: 0x3a2560, low: 0x1a1430, fog: 0x211a3e, fogD: 0.001, hemiS: 0x634ea4, hemiG: 0x241b48, hemiI: 0.64, sunC: 0xb77cff, sunI: 0.31, roseC: 0xff9f4a, roseI: 0.06 },
+      surf: { short_grass_dry: [0xa6c46a, 0xbcd47c], medium_grass_wet: [0x8fb45a, 0xa6c46a], deep_grass: [0x6f9a48, 0x85ab52], rock_slab: [0xc98b5a, 0xd9a070], flagstone: [0xe8c9a0, 0xf2dcb8], hardpack_dirt: [0xd9a070, 0xe8b888], moat_water: [0x4aa0b8, 0x5ab0c8] },
+      plant: { pine: [[0x4f7a48, 0x627e52], [0x4f7a58, 0x6a8a62]], broad: [[0x6f9a48, 0x9ab85a], [0x8a6ab8, 0xa77bdb]], palm: [[0x7aa04a, 0xa6c46a], [0x6f9a48, 0x9ab85a]], bush: [[0x8fb45a, 0xa6c46a], [0x9a7ac8, 0xb894e0]], fern: [[0x8fb45a, 0xb0d070], [0x7aa04a, 0xa6c46a]], guardian: [[0x5a8a60, 0x7aa070], [0x6a7ab0, 0x8a94c8]], oak: [[0x8aa040, 0xa6b84a], [0xc98b5a, 0xd9a070]] },
+      accent: [0xf28b3c, 0xa77bdb], bark: [0x6b4a35, 0x80603e], stone: [0xc9b8a0, 0xd8c8b0], palmBark: [0x8a6c4c, 0xa98a62],
+      far: [0x6f9a48, 0x85ab52, 0xa6c46a, 0xc98b5a, 0xf6ece0], farTree: [0x4f7a48, 0x627e52, 0x7aa04a, 0xa6c46a],
+      tuft: [0x8fb45a, 0xbcd47c], flowers: [0xa77bdb, 0xf28b3c, 0xf3efe6, 0xf2c14e, 0xe45aa8, 0x7fd0ff],
+      water: [0x5ab0c8, 0x14143a, 0x1a3a5a],
+      bio: { canopy: 0xff9f4a, hero: 0xb77cff, tips: 0x59e0d0, flower: 0xb77cff } },
+  };
+  var SKIN = null;
+  function setSkin(id) {
+    var K = SKINS[id] || SKINS.forest; SKIN = K; SKIN.id = SKINS[id] ? id : 'forest';
+    // keep the bloom settings each light already had
+    ['day', 'glow'].forEach(function (k) { var b = { bS: PAL[k].bS, bT: PAL[k].bT, bR: PAL[k].bR }; PAL[k] = Object.assign({}, K[k], b); });
+    SURF_COL = K.surf; PLANT_COL = K.plant;
+    BARK = { pine: K.bark, broad: K.bark, oak: [K.bark[0], K.bark[1]], guardian: K.stone };
+    var b = K.bio;
+    BIO_COL = { pine: [b.canopy, 'under', 0.4], broad: [b.canopy, 'under', 0.46], guardian: [b.hero, 'under', 0.66], oak: [b.hero, 'under', 0.54], palmF: [b.tips, 'tips', 0.85], fern: [b.tips, 'tips', 1.0], bush: [b.canopy, 'top', 0.7], gTrunk: [b.hero, 'roots', 0.7] };
+  }
+  // painted surfaces: a world-space brush texture breaks every flat colour into soft strokes
+  function paint(mat, amt, scale) {
+    var prev = mat.onBeforeCompile, key = mat.customProgramCacheKey ? mat.customProgramCacheKey() : '';
+    var A = { value: amt == null ? 0.2 : amt }, S = { value: scale || 0.32 };
+    mat.onBeforeCompile = function (sh, r) {
+      if (prev && prev !== T.Material.prototype.onBeforeCompile) prev.call(this, sh, r);
+      sh.uniforms.brA = A; sh.uniforms.brS = S;
+      sh.vertexShader = 'varying vec3 vBrW;\n' + sh.vertexShader.replace('#include <project_vertex>', '#include <project_vertex>\nvec4 brW = vec4(transformed, 1.0);\n#ifdef USE_INSTANCING\nbrW = instanceMatrix * brW;\n#endif\nvBrW = (modelMatrix * brW).xyz;');
+      sh.fragmentShader = 'varying vec3 vBrW;\nuniform float brA, brS;\nfloat brH(vec2 p){ p = mod(p, 289.0); return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }\nfloat brN(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(brH(i), brH(i + vec2(1.0, 0.0)), f.x), mix(brH(i + vec2(0.0, 1.0)), brH(i + vec2(1.0, 1.0)), f.x), f.y); }\n' +
+        sh.fragmentShader.replace('#include <color_fragment>', '#include <color_fragment>\nvec2 brQ = vec2(vBrW.x * 0.8 + vBrW.z * 0.45 + vBrW.y * 0.3, vBrW.z * 0.22 - vBrW.x * 0.12 + vBrW.y * 0.9) * brS;\nfloat brV = brN(brQ) * 0.55 + brN(brQ * 2.3 + 7.1) * 0.3 + brN(brQ * 5.1 - 3.7) * 0.15;\ndiffuseColor.rgb *= 1.0 + brA * (brV - 0.5) * 2.0;');
+    };
+    mat.customProgramCacheKey = function () { return key + '|paint'; };
+    return mat;
+  }
+
   /* ---------------- sky ---------------- */
   var skyU = { top: { value: col(PAL.day.top) }, hor: { value: col(PAL.day.hor) }, low: { value: col(PAL.day.low) }, sun: { value: SUN.clone() }, rose: { value: ROSE.clone() }, sunA: { value: 1 } };
   var sky = new T.Mesh(new T.SphereGeometry(5000, 32, 18), new T.ShaderMaterial({
@@ -163,7 +253,7 @@
     if (s === 'deep_grass') {
       var d = Wd.outside(x, y);
       _c1.multiplyScalar(lerp(1, 0.72, clamp(d / 14, 0, 1)));                // forest floor in the shade of the canopy
-      if (slope > 0.5) { _c2.setHex(n2 > 0.55 ? 0x6e6a5c : 0x5a6b45); _c1.lerp(_c2, clamp((slope - 0.5) * 1.6, 0, 0.85)); }   // steep: mossy rock
+      if (slope > 0.5) { _c2.setHex(n2 > 0.55 ? SURF_COL.rock_slab[0] : SURF_COL.deep_grass[0]); _c1.lerp(_c2, clamp((slope - 0.5) * 1.6, 0, 0.85)); }   // steep: mossy rock
     }
     if (s === 'medium_grass_wet' && y > 150) { _c2.setHex(0x4fae64); _c1.lerp(_c2, 0.3); }   // the basin is wetter and bluer green
     out.copy(_c1);
@@ -184,7 +274,7 @@
     }
     for (j = 0; j < ny - 1; j++) for (i = 0; i < nx - 1; i++) { var a = j * nx + i, b = a + 1, d = a + nx, e = d + 1; idx.push(a, b, d, b, e, d); }
     var g = new T.BufferGeometry(); g.setAttribute('position', new T.BufferAttribute(pos, 3)); g.setAttribute('color', new T.BufferAttribute(cl, 3)); g.setIndex(idx); g.computeVertexNormals();
-    var m = new T.Mesh(g, new T.MeshLambertMaterial({ vertexColors: true }));
+    var m = new T.Mesh(g, paint(new T.MeshLambertMaterial({ vertexColors: true }), 0.2, 0.3));
     m.receiveShadow = true; WG.add(m);
     return { mesh: m, rect: [X0, X1, Y0, Y1] };
   }
@@ -200,7 +290,7 @@
   // big simple conifers and crowns over the far slopes, so the walls of the valley read as forest
   function buildFarTrees(rect) {
     var C = boundsCentre(), N = 7000, cone = bake([new T.ConeGeometry(0.3, 1, 7, 1).translate(0, 0.5, 0)], 0.55, 1.1, 0.1), blob = bake([lumpy(new T.IcosahedronGeometry(0.5, 0), 0.3).translate(0, 0.5, 0)], 0.6, 1.1, 0.1);
-    var mc = new T.InstancedMesh(cone, new T.MeshLambertMaterial({ vertexColors: true }), N), mb = new T.InstancedMesh(blob, new T.MeshLambertMaterial({ vertexColors: true }), N);
+    var mc = new T.InstancedMesh(cone, paint(new T.MeshLambertMaterial({ vertexColors: true }), 0.16, 0.12), N), mb = new T.InstancedMesh(blob, paint(new T.MeshLambertMaterial({ vertexColors: true }), 0.16, 0.12), N), FT2 = SKIN.farTree;
     [mc, mb].forEach(function (m) { withColors(m); m.count = 0; m.frustumCulled = false; WG.add(m); });
     var c = new T.Color();
     for (var i = 0; i < N * 2.2 && mc.count + mb.count < N * 1.7; i++) {
@@ -208,8 +298,8 @@
       if (x > rect[0] + 6 && x < rect[1] - 6 && y > rect[2] + 6 && y < rect[3] - 6) continue;
       var z = farZ(x, y, r, a); if (z > 300 || z < Wd.WATER + 1) continue;
       var h = 18 + R() * 22, low = z < 60 && Math.sin(a) > 0.3;
-      if (!low && R() < 0.6) { c.setHex(0x26503a).lerp(_c2.setHex(0x3a7046), R()); put(mc, x, y, z - 2, h * 0.9, h, h * 0.9, 0, c); }
-      else { c.setHex(0x3f7a38).lerp(_c2.setHex(0x6aa242), R()); put(mb, x, y, z - 2, h * 0.9, h * 0.75, h * 0.9, R() * 6, c); }
+      if (!low && R() < 0.6) { c.setHex(FT2[0]).lerp(_c2.setHex(FT2[1]), R()); put(mc, x, y, z - 2, h * 0.9, h, h * 0.9, 0, c); }
+      else { c.setHex(FT2[2]).lerp(_c2.setHex(FT2[3]), R()); put(mb, x, y, z - 2, h * 0.9, h * 0.75, h * 0.9, R() * 6, c); }
     }
     [mc, mb].forEach(function (m) { m.instanceMatrix.needsUpdate = true; m.instanceColor.needsUpdate = true; });
   }
@@ -224,16 +314,16 @@
         if (x > rect[0] && x < rect[1] && y > rect[2] && y < rect[3]) z -= 4;   // the near land wins where the two overlap
         pos.push(x, z, -y);
         var nz = Wd.fbm(x / 60, y / 60);
-        g1.setHex(nz > 0.5 ? 0x2f5f38 : 0x3f7440); g2.setHex(0x557f45);
+        var FR = SKIN.far; g1.setHex(nz > 0.5 ? FR[0] : FR[1]); g2.setHex(FR[2]);
         c.copy(g1).lerp(g2, Wd.fbm(x / 23, y / 23) * 0.6);
-        if (z > 260) { g1.setHex(0x8a84a6); c.lerp(g1, Wd.ss(260, 430, z)); }
-        if (z > 520 + 60 * nz) { g1.setHex(0xf1f3fb); c.lerp(g1, Wd.ss(520, 600, z - 60 * nz)); }
+        if (z > 260) { g1.setHex(FR[3]); c.lerp(g1, Wd.ss(260, 430, z)); }
+        if (z > 520 + 60 * nz) { g1.setHex(FR[4]); c.lerp(g1, Wd.ss(520, 600, z - 60 * nz)); }
         cl.push(c.r, c.g, c.b);
       }
     }
     for (j = 0; j < rings - 1; j++) for (i = 0; i < segs; i++) { var p0 = j * (segs + 1) + i, p1 = p0 + 1, p2 = p0 + segs + 1, p3 = p2 + 1; idx.push(p0, p2, p1, p1, p2, p3); }
     var g = new T.BufferGeometry(); g.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new T.Float32BufferAttribute(cl, 3)); g.setIndex(idx); g.computeVertexNormals();
-    var m = new T.Mesh(g, new T.MeshLambertMaterial({ vertexColors: true })); WG.add(m); return m;
+    var m = new T.Mesh(g, paint(new T.MeshLambertMaterial({ vertexColors: true }), 0.14, 0.06)); WG.add(m); return m;
   }
 
   /* ---------------- glow: living light in the plants (Avatar) and neon line work (Tron) ---------------- */
@@ -352,6 +442,7 @@
   function inst(geo, count, opts) {
     var mat = new T.MeshLambertMaterial({ vertexColors: true, side: opts && opts.side || T.FrontSide });
     if (opts && opts.bio) bioMat(mat, opts.bio[0], opts.bio[1], opts.bio[2]);
+    paint(mat, 0.22, 0.55);
     var m = new T.InstancedMesh(geo, mat, Math.max(1, count));
     m.castShadow = !(opts && opts.noShadow); m.receiveShadow = false; withColors(m); m.count = 0; m.frustumCulled = false;
     plantMats.push(m.material); (PG || WG).add(m); return m;
@@ -372,7 +463,7 @@
     var P = PLANT_COL[type] || PLANT_COL.broad, accent = Wd.fbm(x / 35 + 5, y / 35) > 0.66;
     var pair = accent ? P[1] : P[0];
     _cc.setHex(pair[0]).lerp(_c2.setHex(pair[1]), c);
-    if (type === 'broad' && c > 0.965) _cc.setHex(c > 0.985 ? 0xd9b44a : 0xc8709a);    // a few alien crowns, gold and rose
+    if (type === 'broad' && c > 0.965) _cc.setHex(c > 0.985 ? SKIN.accent[0] : SKIN.accent[1]);    // a few alien crowns, gold and rose
     if (type === 'guardian' && c > 0.93) _cc.setHex(0x3f8f9a);                          // the odd blue-green giant
     return _cc;
   }
@@ -398,7 +489,7 @@
         put(M[p.type], p.x, p.y, p.z + p.base, p.r, p.crownH, p.r, p.rot, col);
         if (p.type === 'guardian' || p.type === 'oak') TS.solids(p).forEach(function (s) { if (s.mat === 'branch') putSeg(M.limb, s.a, s.b, s.r * 1.15, trunk); });
       } else if (p.type === 'palm') {
-        var L = Wd.palmLean(p) * p.h; trunk.setHex(0x8a6c4c).lerp(_c2.setHex(0xa98a62), p.c);
+        var L = Wd.palmLean(p) * p.h; trunk.setHex(SKIN.palmBark[0]).lerp(_c2.setHex(SKIN.palmBark[1]), p.c);
         put(M.palmT, p.x, p.y, p.z - 0.2, L, p.h, p.h, p.rot, trunk);
         put(M.palmF, p.x + Math.cos(p.rot) * L, p.y + Math.sin(p.rot) * L, p.z + p.h, p.h * 0.95, p.h * 0.95, p.h * 0.95, p.rot * 3.1, col);
       } else if (p.type === 'bush') put(M.bush, p.x, p.y, p.z - 0.15, p.r * 1.4, p.h, p.r * 1.4, p.rot, col);
@@ -415,10 +506,10 @@
   // tufts and flowers: the lush layer along every edge and through the basin
   var flowerMats = {};
   function buildUnderstory() {
-    var tufts = new T.InstancedMesh(GEO.tuft, bioMat(new T.MeshLambertMaterial({ vertexColors: true, side: T.DoubleSide }), 0x22c8b0, 'top', 0.45), 11000); withColors(tufts); tufts.count = 0; tufts.frustumCulled = false; WG.add(tufts);
+    var tufts = new T.InstancedMesh(GEO.tuft, paint(bioMat(new T.MeshLambertMaterial({ vertexColors: true, side: T.DoubleSide }), SKIN.bio.tips, 'top', 0.45), 0.18, 0.6), 11000); withColors(tufts); tufts.count = 0; tufts.frustumCulled = false; WG.add(tufts);
     var flowers = new T.InstancedMesh(GEO.flower, new T.MeshLambertMaterial({ color: 0xffffff }), 6500); withColors(flowers); flowers.count = 0; flowers.frustumCulled = false; WG.add(flowers);
-    flowerMats.day = flowers.material; flowerMats.glow = new T.MeshBasicMaterial({ color: 0x9a8cff });
-    var tc = new T.Color(), FC = [0xa77bdb, 0xf2c14e, 0xf28b3c, 0xf3efe6, 0xe45aa8, 0x7fd0ff];
+    flowerMats.day = flowers.material; flowerMats.glow = new T.MeshBasicMaterial({ color: SKIN.bio.flower });
+    var tc = new T.Color(), FC = SKIN.flowers;
     var tries = 0;
     while ((tufts.count < 11000 || flowers.count < 6500) && tries++ < 90000) {
       var y = lerp(Wd.SCATTER.y0, Wd.SCATTER.y1, R()), L = Wd.leftBound(y), Rb = Wd.rightBound(y);
@@ -429,7 +520,7 @@
       if (s === 'rock_slab' || s === 'flagstone') continue;
       var basin = y > 155;
       var okT = d > -6 || (basin && R() < 0.06), okF = (d > -3 && d < 16) || (basin && d > -14 && R() < 0.5);
-      if (okT && tufts.count < 11000) { tc.setHex(0x5a9a3a).lerp(_c2.setHex(0x8cc850), R()); if (d > 6) tc.multiplyScalar(0.75); var sc2 = 0.8 + R() * 1.1; put(tufts, x, y, z - 0.05, sc2, sc2 * (0.8 + R() * 0.8), sc2, R() * 6.28, tc); }
+      if (okT && tufts.count < 11000) { tc.setHex(SKIN.tuft[0]).lerp(_c2.setHex(SKIN.tuft[1]), R()); if (d > 6) tc.multiplyScalar(0.75); var sc2 = 0.8 + R() * 1.1; put(tufts, x, y, z - 0.05, sc2, sc2 * (0.8 + R() * 0.8), sc2, R() * 6.28, tc); }
       if (okF && flowers.count < 6500 && R() < 0.55) {
         var cx2 = x, cy2 = y, cn = 1 + (R() * 4 | 0), fc = FC[(Wd.fbm(x / 18, y / 18) * 9 + R() * 1.5 | 0) % FC.length];
         for (var q = 0; q < cn && flowers.count < 6500; q++) { var fx = cx2 + (R() - 0.5) * 1.2, fy = cy2 + (R() - 0.5) * 1.2; put(flowers, fx, fy, Wd.H(fx, fy) + 0.18 + R() * 0.25, 1, 1, 1, R() * 6, tc.setHex(fc)); }
@@ -802,6 +893,7 @@
     scene.remove(WG); disposeGroup(WG); WG = new T.Group(); scene.add(WG);
     selectTree(null); glowOnly = []; dayOnly = []; plantMats = []; PG = null; crownMeshes = []; seeThrough = false; SPOT = { key: '', v: null, near: [] }; WALK.nearAt = null;
     R = Wd.rng(4242);
+    setSkin(Wd.BIOME || 'forest');
     land = buildLand(); far = buildFar(land.rect);
     plants = buildPlants(world.plants); under = buildUnderstory();
     stoneW = buildStone(world.solids); buildElements(world.solids); pathL = buildPaths(); buildNeon(); water = buildWater(); basket = buildBasket();
@@ -877,7 +969,7 @@
     under.flowers.material = glow ? flowerMats.glow : flowerMats.day;
     BIO.amt.value = glow ? 1 : 0;
     basket.chainMat.color.setHex(glow ? 0x9ff8ff : 0xe9eef2); basket.chainMat.opacity = glow ? 0.8 : 0.55; basket.links.material.emissive.setHex(glow ? 0x167888 : 0x000000);
-    var wm = water.water.material; wm.color.setHex(glow ? 0x0b1f44 : 0x48b4c2); wm.emissive.setHex(glow ? 0x06304e : 0x000000); wm.opacity = glow ? 0.92 : 0.86;
+    var wm = water.water.material; wm.color.setHex(glow ? SKIN.water[1] : SKIN.water[0]); wm.emissive.setHex(glow ? SKIN.water[2] : 0x000000); wm.opacity = glow ? 0.92 : 0.86;
     if (water.falls) water.falls.material.color.setHex(glow ? 0x8ff6ff : 0xeefcff);
     water.mist.children.forEach(function (s) { s.material.color.setHex(glow ? 0x5fdcff : 0xffffff); s.material.opacity = glow ? 0.22 : 0.35; });
     stoneW.bricks.forEach(function (b) { b.material = glow ? stoneW.brickGlow : stoneW.brickDay; });

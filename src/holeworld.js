@@ -33,10 +33,10 @@
   const wx = i => PLOT.x0 + i * PLOT.cell, wy = j => PLOT.y0 + j * PLOT.cell;
 
   function blank(name) {
-    return { v: 1, id: null, name: name || 'New hole', par: 3, template: 'meadow', water: 0, h: new Float32Array(NX * NY).fill(20), s: new Uint8Array(NX * NY).fill(2), trees: [], objs: [], tee: { x: 0, y: 0 }, basket: { x: 0, y: 110 } };
+    return { v: 1, id: null, name: name || 'New hole', par: 3, template: 'meadow', biome: '', water: 0, h: new Float32Array(NX * NY).fill(20), s: new Uint8Array(NX * NY).fill(2), trees: [], objs: [], tee: { x: 0, y: 0 }, basket: { x: 0, y: 110 } };
   }
   function clone(d) {
-    return { v: 1, id: d.id, name: d.name, par: d.par, template: d.template, water: d.water, h: new Float32Array(d.h), s: new Uint8Array(d.s), trees: d.trees.map(t => t.slice()), objs: d.objs.map(o => Object.assign({}, o, o.pts ? { pts: o.pts.map(p => p.slice()) } : {})), inspired: d.inspired, tee: Object.assign({}, d.tee), basket: Object.assign({}, d.basket) };
+    return { v: 1, id: d.id, name: d.name, par: d.par, template: d.template, biome: d.biome || '', water: d.water, h: new Float32Array(d.h), s: new Uint8Array(d.s), trees: d.trees.map(t => t.slice()), objs: d.objs.map(o => Object.assign({}, o, o.pts ? { pts: o.pts.map(p => p.slice()) } : {})), inspired: d.inspired, tee: Object.assign({}, d.tee), basket: Object.assign({}, d.basket) };
   }
 
   /* ---------- sampling ---------- */
@@ -73,6 +73,7 @@
     const W = {};
     const field = openField(d);
     W.data = d;
+    W.BIOME = biomeOf(d);
     W.HOLE = { number: d.number || 1, name: (d.name || 'Hole').toUpperCase(), par: d.par || 3 };
     W.TEE = { x: d.tee.x, y: d.tee.y }; W.BASKET = { x: d.basket.x, y: d.basket.y };
     W.WATER = d.water;
@@ -216,8 +217,28 @@
     return true;
   }
   // the type a "mixed" brush plants at a spot: palms low and wet, pines high, broadleaf between
+  /* ---------- biomes: the six looks from the Aurelia art direction ---------- */
+  const BIOMES = [
+    { id: 'forest', name: 'Elder Forest', blurb: 'Mossy giants, light shafts, fireflies at night.' },
+    { id: 'lagoon', name: 'Lagoon Jungle', blurb: 'Turquoise water, giant leaves, magenta blooms.' },
+    { id: 'river', name: 'River Bend', blurb: 'Meadow, cliffs and falls in late gold light.' },
+    { id: 'boulder', name: 'Boulder Hills', blurb: 'Warm granite piles, sage scrub, plum shadows.' },
+    { id: 'spires', name: 'Spire Desert', blurb: 'Lilac haze, coral ruins, teal-crowned spires.' },
+    { id: 'terraces', name: 'Bloom Terraces', blurb: 'Clay shelves carpeted in wildflowers.' },
+  ];
+  const BIOME_OF = { meadow: 'river', mountain: 'forest', valley: 'river', lake: 'lagoon', terraces: 'terraces', lidar: 'forest',
+    skyline: 'boulder', gravity: 'river', guardian: 'forest', fallen: 'forest', long5: 'river', screen: 'boulder', island: 'lagoon', tunnel: 'forest', ruins: 'spires' };
+  function biomeOf(d) {
+    if (d && d.biome && BIOMES.some(b => b.id === d.biome)) return d.biome;
+    const t = (d && d.template || '').replace('random:', '');
+    return BIOME_OF[t] || 'forest';
+  }
   function mixedType(d, x, y, R) {
-    const z = hAt(d, x, y), wet = z < d.water + 6, roll = R();
+    const z = hAt(d, x, y), wet = z < d.water + 6, roll = R(), b = biomeOf(d);
+    if (b === 'lagoon') return roll < 0.45 ? 'palm' : roll < 0.75 ? 'broad' : roll < 0.92 ? 'fern' : 'guardian';
+    if (b === 'spires') return roll < 0.7 ? 'palm' : roll < 0.92 ? 'bush' : 'broad';
+    if (b === 'boulder') return roll < 0.45 ? 'bush' : roll < 0.8 ? 'broad' : 'pine';
+    if (b === 'terraces') return roll < 0.35 ? 'bush' : roll < 0.6 ? 'fern' : roll < 0.9 ? 'broad' : 'palm';
     if (wet) return roll < 0.55 ? 'palm' : roll < 0.85 ? 'broad' : roll < 0.95 ? 'fern' : 'guardian';
     if (z > d.water + 28) return roll < 0.76 ? 'pine' : roll < 0.97 ? 'broad' : 'guardian';
     return roll < 0.48 ? 'pine' : roll < 0.88 ? 'broad' : roll < 0.95 ? 'bush' : roll < 0.985 ? 'guardian' : 'oak';
@@ -254,7 +275,7 @@
     { id: 'terraces', name: 'The Terraces', blurb: 'A full copy of Aurelia hole 6 to remix.' },
   ];
   function fromTemplate(id, name) {
-    const d = blank(name); d.template = id;
+    const d = blank(name); d.template = id; d.biome = BIOME_OF[id] || 'forest';
     const R = rng(Math.floor(Math.random() * 1e9));
     const seedX = R() * 100, seedY = R() * 100;
     const nz = (x, y, sc) => fbm(x / sc + seedX, y / sc + seedY) - 0.5;
@@ -320,7 +341,7 @@
     const hq = new Int16Array(d.h.length); for (let k = 0; k < d.h.length; k++) hq[k] = clamp(Math.round(d.h[k] * 50), -32760, 32760);
     const tq = new Int16Array(d.trees.length * ST);
     d.trees.forEach((t, i) => { const o = i * ST; tq[o] = t[0]; tq[o + 1] = Math.round(t[1] * 10); tq[o + 2] = Math.round(t[2] * 10); tq[o + 3] = Math.round(t[3] * 100); tq[o + 4] = Math.round(t[4] * 1000); tq[o + 5] = Math.round(t[5] * 1000); tq[o + 6] = Math.round((t[6] || 0) * 1000); tq[o + 7] = Math.round((t[7] != null ? t[7] : TS.DEF[TYPES[t[0]] || 'pine'].cb) * 1000); tq[o + 8] = Math.round((t[8] != null ? t[8] : 0.5) * 1000); });
-    return { v: 2, name: d.name, par: d.par, template: d.template || '', inspired: d.inspired || '', water: d.water, nx: NX, ny: NY, tee: d.tee, basket: d.basket, objs: d.objs,
+    return { v: 2, name: d.name, par: d.par, template: d.template || '', biome: d.biome || '', inspired: d.inspired || '', water: d.water, nx: NX, ny: NY, tee: d.tee, basket: d.basket, objs: d.objs,
       h: b64(new Uint8Array(hq.buffer)), s: b64(d.s), t: b64(new Uint8Array(tq.buffer)), nt: d.trees.length, st: ST };
   }
   function decode(e) {
@@ -330,7 +351,7 @@
     d.s.set(unb64(e.s).subarray(0, d.s.length));
     const st = e.st || 7, tb = unb64(e.t || ''), tq = new Int16Array(tb.buffer, tb.byteOffset, tb.byteLength >> 1);
     for (let i = 0; i < (e.nt || 0); i++) { const o = i * st, ty = tq[o]; d.trees.push([ty, tq[o + 1] / 10, tq[o + 2] / 10, tq[o + 3] / 100, tq[o + 4] / 1000, tq[o + 5] / 1000, tq[o + 6] / 1000, st > 7 ? tq[o + 7] / 1000 : TS.DEF[TYPES[ty] || 'pine'].cb, st > 8 ? tq[o + 8] / 1000 : 0.5]); }
-    d.par = e.par || 3; d.template = e.template || ''; d.inspired = e.inspired || ''; d.water = e.water || 0; d.tee = e.tee || d.tee; d.basket = e.basket || d.basket; d.objs = (e.objs || []).map(o => Object.assign({}, o, o.pts ? { pts: o.pts.map(p => p.slice()) } : {}));
+    d.par = e.par || 3; d.template = e.template || ''; d.biome = e.biome || ''; d.inspired = e.inspired || ''; d.water = e.water || 0; d.tee = e.tee || d.tee; d.basket = e.basket || d.basket; d.objs = (e.objs || []).map(o => Object.assign({}, o, o.pts ? { pts: o.pts.map(p => p.slice()) } : {}));
     return d;
   }
   /* ---------- Flightline paths: a lane through the forest ----------
@@ -386,9 +407,9 @@
     { id: 'tunnel', name: 'Flightline tunnel', inspired: 'An Aurelia original: a lane cut through old forest under a ceiling of leaves.' },
     { id: 'ruins', name: 'Temple approach', inspired: 'An Aurelia original: thread the old ruins, a buried pyramid off the line.' },
   ];
-  function randomHole(archId, seed) {
+  function randomHole(archId, seed, biome) {
     const R = rng(seed || Math.floor(Math.random() * 1e9)), A = ARCHETYPES.find(a => a.id === archId) || ARCHETYPES[Math.floor(R() * ARCHETYPES.length)];
-    const d = blank(A.name); d.template = 'random:' + A.id; d.inspired = A.inspired;
+    const d = blank(A.name); d.template = 'random:' + A.id; d.biome = (biome && BIOMES.some(b => b.id === biome)) ? biome : (BIOME_OF[A.id] || 'forest'); d.inspired = A.inspired;
     const sx = R() * 100, sy = R() * 100, nz = (x, y, sc) => fbm(x / sc + sx, y / sc + sy) - 0.5;
     const P = { len: 120, drop: 4, side: 0.006, dog: 0, w: 16, wet: false };
     const pick = (a, b) => lerp(a, b, R());
@@ -460,5 +481,5 @@
   // par by length: up to 420 ft is a 3, up to 800 a 4, longer a 5
   function suggestPar(d) { const ft = Math.hypot(d.basket.x - d.tee.x, d.basket.y - d.tee.y) / FT; return ft <= 420 ? 3 : ft <= 800 ? 4 : 5; }
 
-  return { TS, ELEMENTS, ARCHETYPES, randomHole, applyPath, distToPath, elementParts, PLOT, NX, NY, SURF, SURF_NAME, TYPES, MAX_TREES, TEMPLATES, idx, gx, gy, wx, wy, blank, clone, hAt, sAt, inPlot, world, fromTemplate, plantForest, addTree, mixedType, encode, decode, suggestPar, crownR, FT };
+  return { TS, BIOMES, biomeOf, ELEMENTS, ARCHETYPES, randomHole, applyPath, distToPath, elementParts, PLOT, NX, NY, SURF, SURF_NAME, TYPES, MAX_TREES, TEMPLATES, idx, gx, gy, wx, wy, blank, clone, hAt, sAt, inPlot, world, fromTemplate, plantForest, addTree, mixedType, encode, decode, suggestPar, crownR, FT };
 });

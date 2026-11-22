@@ -202,5 +202,5 @@
     [[38, 190, 48], [9, 219, 31]], [[18, 250, 42], [6, 200, 32]], [[8, 262, 50], [0, 60, 48]],
   ];
   HOLE.title = 'The Terraces'; HOLE.blurb = 'Bomb it off the mountain. Three moss walls down, a creek behind the pin.';
-  return { bounds, SCATTER, PATH, WATERBOX, FALLS, INTRO, palmLean, HOLE, TEE, BASKET, DROP, POOL, WATER, EDGES, TEE_Z, H, G, isWater, surfaceAt, outside, leftBound, rightBound, creekY, creekDist, plants, solidsFor, fixLie, inBounds, fbm, rng, ss, FT };
+  return { BIOME: 'terraces', bounds, SCATTER, PATH, WATERBOX, FALLS, INTRO, palmLean, HOLE, TEE, BASKET, DROP, POOL, WATER, EDGES, TEE_Z, H, G, isWater, surfaceAt, outside, leftBound, rightBound, creekY, creekDist, plants, solidsFor, fixLie, inBounds, fbm, rng, ss, FT };
 });
